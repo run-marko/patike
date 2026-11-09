@@ -1,7 +1,8 @@
 # Postavlja lozinku za dashboard patika i šalje šifrovanu bazu na GitHub (repozitorijum run-marko/patike).
 # Pokreće je Marko u terminalu; lozinku kuca samo on, ona se nigde ne ispisuje i ne čuva na disku.
 #   & "D:\Provera patika\cloud\postavi-lozinku.ps1"
-$ErrorActionPreference = "Stop"
+# "Continue": u PowerShell 5.1 poruka gh-a na stderr bi uz "Stop" prekinula skriptu; greške se proveravaju preko $LASTEXITCODE.
+$ErrorActionPreference = "Continue"
 $repo = "run-marko/patike"
 $gh = "C:\Program Files\GitHub CLI\gh.exe"
 $root = Split-Path -Parent $PSScriptRoot
@@ -9,8 +10,9 @@ Set-Location $root
 
 & $gh auth status *> $null
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "Prvo prijava na GitHub. Kad terminal pita, samo pritisni Enter." -ForegroundColor Cyan
-    & $gh auth login --hostname github.com --web --git-protocol https
+    Write-Host "Prvo prijava na GitHub (Claude je odobrava u pregledaču, sačekaj)..." -ForegroundColor Cyan
+    # prazan ulaz: gh tada samo ispiše kod i čeka odobrenje, bez pitanja i bez Enter-a
+    "" | & $gh auth login --hostname github.com --web --git-protocol https
     if ($LASTEXITCODE -ne 0) { throw "Prijava nije uspela." }
 }
 
