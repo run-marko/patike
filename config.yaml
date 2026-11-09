@@ -1,0 +1,61 @@
+# Running Shoe Deal Finder Serbia - korisnički profil i podešavanja
+
+country: Serbia
+currency: RSD
+gender: men                 # men | women: pol koji dashboard prvo prikazuje, a važi za deals, deals.csv i alarme
+shoe_length_cm: 29.5        # dužina patike; prikazuje se uz cm vrednost koju prodavac navodi
+preferred_eu_sizes: [45, 45.5, 46]
+# false: rang i skor važe za sve veličine; uz svaku prodavnicu pišu njene dostupne veličine.
+# true: rang prikazuje samo ponude sa željenom veličinom i ona ulazi u skor.
+filter_preferred_size: false
+# Razlomljene Adidas veličine (45 1/3) računaju se kao približno poklapanje
+# ako su u okviru ove tolerancije od željene EU veličine. Uvek se označavaju kao približne.
+eu_size_tolerance: 0.2
+other_size_formats: preserve   # US/UK/cm vrednosti se čuvaju kako ih prodavac navodi, bez sopstvene konverzije
+categories: [daily_trainer, long_run, tempo, racing, recovery]
+surfaces: [road]
+maximum_budget_rsd: null
+minimum_independent_score: null
+include_previous_generations: true
+include_unknown_review_scores: true
+minimum_deal_confidence: medium   # low | medium | high
+scan_interval: on_demand          # nema pozadinskog nadzora; cene se osvežavaju samo kad pokreneš scan
+
+scan:
+  skip_other_gender_urls: false   # true: ne preuzimaj stranice koje su po URL-u za drugi pol
+  sitemap_cache_hours: 24
+  request_timeout_s: 30
+  max_retries: 3
+  default_delay_s: 1.5            # razmak između zahteva po sajtu (Crawl-delay iz robots.txt ima prednost ako je veći)
+  stale_after_hours: 72           # starije ponude dobijaju upozorenje i ne ulaze u poređenje
+  recheck_out_of_stock_days: 7    # rasprodat oglas se ponovo otvara tek posle ovoliko dana; 0 = svaki put
+
+history:
+  min_observations_for_average: 3
+  min_observations_for_advantage: 5
+  min_span_days_for_advantage: 14
+
+scoring:
+  weights:                        # zbir ne mora biti 1; težine se normalizuju na dostupne komponente
+    market: 0.40
+    history: 0.25
+    quality: 0.20
+    size: 0.10
+    retailer_claim: 0.05
+  market_range: [-0.15, 0.25]     # prednost u odnosu na tržište koja se mapira na 0-100
+  history_range: [-0.10, 0.25]
+  quality_range: [60, 95]         # nezavisna ocena koja se mapira na 0-100
+  claim_range: [0.0, 0.50]
+  thresholds:                     # prednost (tržište/istorija) + skor za klasu
+    exceptional: {advantage: 0.20, score: 80, min_retailers: 3, min_quality: 75}
+    very_good: {advantage: 0.12, score: 65}
+    good: {advantage: 0.05}
+    normal: {advantage: -0.05}
+
+# Lista praćenja. Tipovi: below_price, pct_drop, historical_min, size_available, cheapest_confirmed
+watchlist:
+  - {model: "ASICS Novablast 5", type: below_price, target_rsd: 12000}
+  - {model: "ASICS Novablast 5", type: size_available}
+  - {model: "Nike Vomero 18", type: pct_drop, percent: 10}
+  - {model: "Nike Vomero 18", type: historical_min}
+  - {model: "Adidas Adizero Boston 13", type: cheapest_confirmed}

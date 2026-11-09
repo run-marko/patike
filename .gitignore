@@ -1,0 +1,9 @@
+# Okruženje i keš
+.venv/
+__pycache__/
+.pytest_cache/
+
+# Podaci: baza, keš, sličice i izveštaji ne idu u git.
+# Na GitHubu se čuvaju kao fajlovi izdanja "stanje" (vidi .github/workflows/dnevni-sken.yml).
+data/
+reports/output/

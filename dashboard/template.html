@@ -1,0 +1,769 @@
+<!doctype html>
+<html lang="sr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deal Finder Patike</title>
+<style>
+:root {
+  color-scheme: light;
+  --page:#eaf1f8; --surface:#ffffff; --ink:#0b0b0b; --ink2:#52514e; --muted:#6f6d68; --grid:#e1e0d9; --axis:#c3c2b7;
+  --border:rgba(11,11,11,.12); --accent:#256abf; --good:#006300; --bad:#b52f2f; --warn:#8a5a00; --wash:rgba(11,11,11,.04);
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;--s7:#6250d6;--s8:#e34948;
+}
+@media (prefers-color-scheme: dark) { :root:where(:not([data-theme="light"])) {
+  color-scheme: dark;
+  --page:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#9a9890; --grid:#2c2c2a; --axis:#383835;
+  --border:rgba(255,255,255,.12); --accent:#6da7ec; --good:#3fbf3f; --bad:#e66767; --warn:#e0a93a; --wash:rgba(255,255,255,.05);
+  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;
+}}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#9a9890; --grid:#2c2c2a; --axis:#383835;
+  --border:rgba(255,255,255,.12); --accent:#6da7ec; --good:#3fbf3f; --bad:#e66767; --warn:#e0a93a; --wash:rgba(255,255,255,.05);
+  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--page); color:var(--ink); font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif; }
+a { color:var(--accent); }
+header { padding:20px 20px 8px; max-width:1240px; margin:auto; }
+h1 { font-size:22px; margin:0 0 4px; }
+.sub { color:var(--ink2); }
+main { max-width:1240px; margin:auto; padding:0 20px 60px; }
+.filters { position:sticky; top:0; z-index:5; background:var(--page); padding:10px 0; display:flex; flex-wrap:wrap; gap:8px; align-items:center; border-bottom:1px solid var(--border); }
+.filters label { display:flex; flex-direction:column; font-size:11px; color:var(--muted); gap:2px; }
+select,input { font:inherit; color:var(--ink); background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:5px 7px; min-width:0; }
+input[type=search] { width:170px; } input[type=number] { width:100px; }
+button { font:inherit; color:var(--ink); background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:6px 10px; cursor:pointer; }
+button:hover { background:var(--wash); }
+nav.tabs { display:flex; flex-wrap:wrap; gap:4px; margin:14px 0; }
+nav.tabs button[aria-selected=true] { background:var(--ink); color:var(--page); border-color:var(--ink); }
+.note { color:var(--ink2); margin:0 0 12px; max-width:90ch; }
+.offer { background:var(--surface); border:1px solid var(--border); border-radius:8px; margin-bottom:8px; }
+.offer summary, .cols { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1.1fr) 58px minmax(0,1.2fr) minmax(0,1.1fr) minmax(0,1.2fr) minmax(0,1.1fr) 52px 88px; gap:12px; padding:12px 14px; }
+.offer summary { list-style:none; cursor:pointer; align-items:start; }
+.cols { padding:4px 14px; margin-bottom:4px; position:sticky; top:var(--filters-h,0); z-index:4; background:var(--page); }
+.sort { border:0; background:none; padding:3px 0; font-size:12px; font-weight:600; color:var(--ink2); text-align:left; white-space:nowrap; }
+.sort:hover { background:none; color:var(--ink); text-decoration:underline; }
+.sort[aria-sort] { color:var(--ink); }
+.lbl { display:none; font-size:11px; color:var(--muted); }
+.big { font-size:15px; font-weight:600; font-variant-numeric:tabular-nums; }
+.picked { font-weight:700; color:var(--ink); }
+.field { display:flex; flex-direction:column; font-size:11px; color:var(--muted); gap:2px; }
+.multi { position:relative; }
+.multi summary { list-style:none; cursor:pointer; font-size:14px; color:var(--ink); background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:5px 7px; min-width:110px; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.multi summary::-webkit-details-marker { display:none; }
+.multi-panel { position:absolute; top:calc(100% + 4px); left:0; z-index:6; width:290px; max-width:calc(100vw - 32px); background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:10px; box-shadow:0 2px 8px rgba(0,0,0,.15); }
+.multi-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:2px 8px; max-height:280px; overflow-y:auto; margin-bottom:8px; }
+.filters .multi-grid label { flex-direction:row; align-items:center; gap:5px; font-size:13px; color:var(--ink); padding:3px 0; cursor:pointer; }
+.offer summary::-webkit-details-marker { display:none; }
+.name { font-weight:600; }
+.who { display:flex; gap:10px; align-items:flex-start; min-width:0; }
+.who > div:last-child { min-width:0; }
+.thumb { flex:none; width:72px; height:72px; object-fit:contain; background:#fff; border:1px solid var(--border); border-radius:6px; }
+.thumb.none { display:flex; align-items:center; justify-content:center; background:var(--wash); color:var(--muted); font-size:11px; text-align:center; }
+table .thumb { width:44px; height:44px; }
+.small { font-size:12px; color:var(--ink2); }
+.price { font-size:17px; font-weight:600; font-variant-numeric:tabular-nums; }
+.old { text-decoration:line-through; color:var(--muted); font-size:12px; }
+.score { font-size:17px; font-weight:600; font-variant-numeric:tabular-nums; }
+.cls { font-size:11px; font-weight:600; letter-spacing:.02em; }
+.cls.top { color:var(--good); } .cls.over { color:var(--bad); } .cls.none { color:var(--muted); }
+.flag { color:var(--warn); }
+.change { margin-top:3px; font-size:12px; font-weight:600; }
+.change.new_low,.change.down { color:var(--good); } .change.up { color:var(--bad); }
+.change .small { display:block; font-weight:400; }
+.detail { padding:4px 14px 14px; display:grid; grid-template-columns:1fr 1fr; gap:18px; border-top:1px solid var(--border); }
+.detail h4 { margin:10px 0 4px; font-size:13px; }
+.detail ul { margin:0; padding-left:18px; }
+.sizes { display:flex; flex-wrap:wrap; gap:4px; }
+.size { padding:1px 6px; border:1px solid var(--border); border-radius:4px; font-size:12px; font-variant-numeric:tabular-nums; }
+.size.no { color:var(--muted); text-decoration:line-through; }
+.size.want { border-color:var(--ink); font-weight:600; }
+.buy { display:inline-block; margin-top:8px; font-weight:600; }
+.stores { display:flex; flex-wrap:wrap; gap:4px; align-items:center; }
+.offer summary > .stores { grid-column:1 / -1; }
+.store { padding:2px 7px; border:1px solid var(--border); border-radius:4px; font-size:12px; font-variant-numeric:tabular-nums; text-decoration:none; }
+.store:hover { background:var(--wash); }
+.store.hand { border-style:dashed; color:var(--ink2); }
+.store.mark { margin-left:auto; color:var(--ink2); }
+.notice { max-width:none; padding:8px 10px; background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--ink); }
+.store span { color:var(--ink2); }
+table { border-collapse:collapse; width:100%; background:var(--surface); }
+th,td { text-align:left; padding:6px 9px; border-bottom:1px solid var(--grid); vertical-align:top; }
+th { font-size:12px; color:var(--ink2); font-weight:600; }
+td.num { font-variant-numeric:tabular-nums; text-align:right; }
+.tablewrap { overflow-x:auto; border:1px solid var(--border); border-radius:8px; margin-bottom:14px; }
+.group { margin-bottom:22px; }
+.group h3 { margin:0 0 3px; font-size:15px; }
+.chart { position:relative; }
+.legend { display:flex; flex-wrap:wrap; gap:10px; font-size:12px; color:var(--ink2); margin-bottom:4px; }
+.key { display:inline-block; width:14px; height:2px; vertical-align:middle; margin-right:4px; }
+.tip { position:absolute; pointer-events:none; background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:6px 8px; font-size:12px; box-shadow:0 2px 8px rgba(0,0,0,.15); display:none; z-index:3; white-space:nowrap; }
+.tip b { font-variant-numeric:tabular-nums; }
+.empty { padding:24px; color:var(--ink2); background:var(--surface); border:1px dashed var(--border); border-radius:8px; }
+@media (max-width:760px) {
+  header { padding:16px 16px 8px; } main { padding:0 16px 40px; }
+  .filters { position:static; }
+  .offer summary { grid-template-columns:1fr 1fr; }
+  .offer summary > :first-child { grid-column:1 / -1; }
+  .cols { display:flex; flex-wrap:wrap; gap:4px 14px; position:static; }
+  .lbl { display:block; }
+  .detail { grid-template-columns:1fr; }
+  input[type=search] { width:100%; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Running Shoe Deal Finder Srbija</h1>
+  <div class="sub" id="meta"></div>
+</header>
+<main>
+  <div class="filters" id="filters"></div>
+  <nav class="tabs" id="tabs" role="tablist"></nav>
+  <div id="content"></div>
+</main>
+<script>
+const DATA = /*__DATA__*/null;
+const CATS = {daily_trainer:"Svakodnevne",long_run:"Duge staze",tempo:"Tempo",interval:"Intervali",racing:"Trka",recovery:"Oporavak",stability:"Stabilnost"};
+const STAT = {VERIFIED:"Provereno",PARTIAL:"Delimično",NOT_VERIFIED:"NOT VERIFIED",NOT_CHECKED:"Nije skenirano"};
+const AVAIL = {AVAILABLE:"Dostupno",OUT_OF_STOCK:"Nema na stanju",UNKNOWN:"Nepoznato"};
+const CLAIM = {NONE:"bez popusta",CLAIMED:"tvrdnja prodavca, nije potvrđena",CONTRADICTED:"tvrdnja je osporena podacima",SUPPORTED:"potkrepljeno našom istorijom"};
+const RETAILER_ORDER = DATA.retailers.map(r=>r.retailer).sort();
+
+function el(tag, attrs, ...kids) {
+  const node = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs||{})) {
+    if (v===null||v===undefined||v===false) continue;
+    if (k==="class") node.className=v; else if (k==="text") node.textContent=v;
+    else if (k.startsWith("on")) node.addEventListener(k.slice(2),v); else node.setAttribute(k,v);
+  }
+  for (const kid of kids.flat()) if (kid!==null&&kid!==undefined) node.append(kid);
+  return node;
+}
+const rsd = v => v===null||v===undefined ? "n/a" : Math.round(v).toLocaleString("sr-RS")+" RSD";
+const pct = v => v===null||v===undefined ? "n/a" : (v>0?"+":"")+(v*100).toFixed(1)+"%";
+const when = s => s ? new Date(s+"Z").toLocaleString("sr-RS",{dateStyle:"short",timeStyle:"short"}) : "nije provereno";
+// Muški i unisex oglas istog modela su posebni redovi, pa naziv mora da ih razlikuje.
+const fullName = o => { const tags=[...o.qualifiers,...(o.gender==="unisex"?["unisex"]:[])]; return `${o.brand} ${o.model}${tags.length?" ("+tags.join(", ")+")":""}`; };
+const safeUrl = u => /^https?:\/\//.test(u||"") ? u : null;
+
+const state = {tab:"top", q:"", gender:DATA.profile.gender, brand:"", sizes:new Set(), retailer:"", category:"", maxPrice:"", confidence:DATA.profile.minimum_deal_confidence, sort:"", dir:1, minDiscount:""};
+const TABS = [
+  ["top","Top 20"],["models","Svi modeli"],["cheap","Najjeftinije"],["long","Duge staze"],["daily","Svakodnevne"],["speed","Tempo i trka"],
+  ["changes","Promene cena"],["compare","Poređenje prodavnica"],["all","Sve ponude"],["alerts","Alarmi"],["review","Ručna provera"],["notrunning","Nije za trčanje"],["stores","Prodavnice"],
+];
+// Ručne oznake modela. Važe za ceo model, sa svim polovima i varijantama; čuva ih lokalni server u data/not_running.json.
+const notRunning=new Map(Object.entries(DATA.not_running||{}));
+const syncNotRunning=marks=>{ notRunning.clear(); Object.entries(marks).forEach(([id,m])=>notRunning.set(id,m)); };
+async function setNotRunning(id,name,marked){
+  try{
+    const r=await fetch("api/not-running",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model_id:id,name,marked})});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    syncNotRunning(await r.json());
+    state.notice={text:marked?`${name} je označen da nije za trčanje i više nije u listama.`:`${name} je vraćen u liste.`,undo:()=>setNotRunning(id,name,!marked)};
+  }catch(e){
+    state.notice={text:`Oznaka nije sačuvana. Dashboard mora biti otvoren preko komande "main.py dashboard" (${e.message}).`};
+  }
+  render();
+}
+function markButton(o){
+  if(window.DEAL_STATIC) return null;  // u artifaktu nema servera koji čuva oznaku
+  const name=`${o.brand} ${o.model}`;
+  return el("button",{class:"store mark",type:"button",text:"Nije za trčanje",
+    title:"Sklanja ceo model iz svih lista. Vraća se u kartici Nije za trčanje. Cene i istorija ostaju sačuvane.",
+    onclick:e=>{e.preventDefault();e.stopPropagation();setNotRunning(o.model_id,name,true);}});
+}
+function noticeBar(){
+  const n=state.notice;
+  return n?el("p",{class:"note notice",role:"status"},n.text+" ",n.undo?el("button",{class:"store",type:"button",text:"Poništi",onclick:n.undo}):null):null;
+}
+function notRunningView(){
+  const rows=[...notRunning].map(([id,m])=>{
+    const offers=DATA.offers.filter(o=>o.model_id===id);
+    const cheap=offers.filter(o=>o.availability==="AVAILABLE").sort((a,b)=>a.price-b.price)[0]||null;
+    return {id,m,head:offers[0]||null,cheap};
+  }).sort((a,b)=>a.m.name.localeCompare(b.m.name,"sr",{numeric:true}));
+  if(!rows.length) return [el("div",{class:"empty",text:'Nema označenih modela. Dugme "Nije za trčanje" je na kraju svakog reda.'})];
+  return [el("p",{class:"note",text:`${rows.length} označenih modela. Oni nisu ni u jednoj listi ni u pretrazi, ali se njihove cene i dalje beleže. Dugme Vrati ih odmah vraća.`}),
+    el("div",{class:"tablewrap"},el("table",{},
+      el("thead",{},el("tr",{},["Model","Najniža cena","Označeno",""].map(t=>el("th",{text:t})))),
+      el("tbody",{},rows.map(r=>el("tr",{},
+        el("td",{},el("div",{class:"who"},r.head?shoeImage(r.head):null,el("div",{class:"name",text:r.m.name}))),
+        el("td",{},r.cheap?`${rsd(r.cheap.price)} ${r.cheap.retailer_name}`:"Nema na stanju"),
+        el("td",{class:"small",text:when(r.m.marked_at)}),
+        el("td",{},el("button",{class:"store",type:"button",text:"Vrati",onclick:()=>setNotRunning(r.id,r.m.name,false)})))))))];
+}
+const CONF = {low:0,medium:1,high:2};
+const CLASS_RANK = {"EXCEPTIONAL":0,"VERY GOOD":1,"GOOD":2,"NORMAL":3,"OVERPRICED":4,"INSUFFICIENT DATA":5};
+
+const forGender=o=>o.gender===state.gender||o.gender==="unisex";
+function profileOffers() { return DATA.offers.filter(forGender); }
+// "45 1/3" -> 45.33, da razlomljene veličine stoje između celih brojeva.
+function sizeValue(label){
+  const m=String(label).trim().match(/^(\d+(?:[.,]\d+)?)(?:\s+(\d+)\/(\d+))?$/);
+  return m?parseFloat(m[1].replace(",","."))+(m[2]?Number(m[2])/Number(m[3]):0):null;
+}
+const bySize=(a,b)=>(sizeValue(a)??999)-(sizeValue(b)??999)||String(a).localeCompare(String(b));
+const liveLabels=o=>[...new Set((o.sizes||[]).filter(s=>s.available===true).map(s=>s.norm))].sort(bySize);
+const hasPicked=o=>!state.sizes.size||(o.sizes||[]).some(s=>s.available===true&&state.sizes.has(s.norm));
+// Sa izabranim veličinama važi cena baš tih veličina, jer na nekim sajtovima cena zavisi od broja.
+function priceOf(o){
+  if(!state.sizes.size) return o.price;
+  const prices=(o.sizes||[]).filter(s=>s.available===true&&state.sizes.has(s.norm)).map(s=>s.price||o.price);
+  return prices.length?Math.min(...prices):o.price;
+}
+function filtered(pool, anyConfidence) {
+  const q = state.q.trim().toLowerCase();
+  return pool.filter(o=>{
+    if (notRunning.has(o.model_id)) return false;
+    if (q && !fullName(o).toLowerCase().includes(q)) return false;
+    if (state.brand && o.brand!==state.brand) return false;
+    if (state.retailer && o.retailer!==state.retailer) return false;
+    if (state.category && !o.categories.includes(state.category)) return false;
+    if (!hasPicked(o)) return false;
+    if (state.maxPrice && priceOf(o)>Number(state.maxPrice)) return false;
+    if (state.minDiscount && (o.claimed_discount||0)*100<Number(state.minDiscount)) return false;
+    if (!anyConfidence && state.confidence && CONF[o.confidence]<CONF[state.confidence]) return false;
+    return true;
+  });
+}
+function byDeal(a,b){ return CLASS_RANK[a.classification]-CLASS_RANK[b.classification]||(b.score||0)-(a.score||0)||priceOf(a)-priceOf(b); }
+const discountText = o => o&&o.claimed_discount!==null&&o.claimed_discount!==undefined ? "-"+Math.round(o.claimed_discount*100)+"%" : "-";
+const high = (a,b,f) => (f(b)??-1)-(f(a)??-1);  // bez vrednosti ide na kraj, a ne računa se kao nula
+// Cena u odnosu na američku preporučenu cenu. Negativno znači ispod nje.
+const vsMsrp=o=>o.msrp_rsd?priceOf(o)/o.msrp_rsd-1:null;
+const pctWhole=v=>(v>0?"+":"")+Math.round(v*100)+"%";
+const MSRP_HELP="Američka preporučena cena po RunRepeat-u, preračunata po kursu. Nije ulična cena u inostranstvu. Ne sadrži američki porez, a cene u Srbiji sadrže 20% PDV-a.";
+function msrpLine(o){
+  if(!o.msrp_usd) return "nema podatka";
+  return "$"+Math.round(o.msrp_usd)+(o.msrp_rsd?" = "+rsd(o.msrp_rsd):"");
+}
+// Stvarne cene iz stranih prodavnica za isti model, pol i varijantu; sa izabranom veličinom samo one koje je imaju.
+function euRows(o){
+  const rows=(DATA.foreign||{})[o.group]||[];
+  return state.sizes.size?rows.filter(r=>r.sizes.some(s=>state.sizes.has(s))):rows;
+}
+const euBest=o=>euRows(o)[0]||null;
+const vsEu=o=>{const b=euBest(o);return b&&b.price_rsd?priceOf(o)/b.price_rsd-1:null;};
+const eurText=v=>Number(v).toLocaleString("sr-RS",{maximumFractionDigits:2})+" €";
+const sameColor=(r,o)=>{const a=(r.sku||"").toUpperCase(),b=(o.sku||"").toUpperCase();return !!a&&!!b&&(a===b||a.startsWith(b+"-"));};
+const EU_HELP="Najniža cena istog modela, pola i varijante iz strane prodavnice, sa PDV-om te zemlje, bez dostave i eventualne carine do Srbije. Negativan procenat znači da je kod nas jeftinije. Ne ulazi u skor.";
+function euCell(o){
+  const b=euBest(o);
+  if(!b) return [el("div",{class:"big",text:"-"}),el("div",{class:"small",text:state.sizes.size?"nema izabranih brojeva":"nema u izvorima"})];
+  return [el("div",{class:"big",text:vsEu(o)===null?"-":pctWhole(vsEu(o))}),
+    el("div",{class:"small",text:eurText(b.price_eur)+(b.price_rsd?" = "+rsd(b.price_rsd):"")}),
+    safeUrl(b.url)?el("a",{class:"small",href:safeUrl(b.url),target:"_blank",rel:"noopener",text:b.name}):el("div",{class:"small",text:b.name}),
+    el("div",{class:"small",text:sameColor(b,o)?"ista šifra":"druga boja"})];
+}
+function euTable(o){
+  const rows=euRows(o);
+  if(!rows.length) return el("div",{class:"small",text:"Nema ovog modela u stranim izvorima koje čitamo."});
+  return el("div",{class:"tablewrap"},el("table",{},
+    el("thead",{},el("tr",{},["Prodavnica","Šifra","Cena","Precrtana","U dinarima","Veličine","Provereno",""].map(t=>el("th",{text:t})))),
+    el("tbody",{},rows.map(r=>el("tr",{},
+      el("td",{text:r.name}),el("td",{text:r.sku||"-"}),el("td",{class:"num",text:eurText(r.price_eur)}),
+      el("td",{class:"num",text:r.old_price_eur?eurText(r.old_price_eur):"-"}),
+      el("td",{class:"num",text:r.price_rsd?rsd(r.price_rsd):"-"}),el("td",{text:r.sizes.join(", ")||"nepoznato"}),
+      el("td",{text:when(r.observed_at)}),
+      el("td",{},safeUrl(r.url)?el("a",{href:safeUrl(r.url),target:"_blank",rel:"noopener",text:"Otvori"}):"-"))))));
+}
+// Kolone po kojima se sortira: vrednost i smer pri prvom kliku (1 rastuće, -1 opadajuće).
+const COLUMNS = {
+  name:{label:"Model",dir:1,value:o=>fullName(o)},
+  price:{label:"Cena",dir:1,value:priceOf},
+  discount:{label:"Popust",dir:-1,value:o=>o.claimed_discount},
+  market:{label:"Tržište",dir:-1,value:o=>o.market_advantage},
+  msrp:{label:"Cena u SAD",dir:1,value:o=>vsMsrp(o)},
+  eu:{label:"Cena u EU",dir:1,value:o=>vsEu(o)},
+  sizes:{label:"Veličine",dir:-1,value:o=>liveLabels(o).length},
+  review:{label:"Ocena",dir:-1,value:o=>o.review_score},
+  score:{label:"Skor",dir:-1,value:o=>o.score},
+};
+// Prazna vrednost je uvek na kraju, u oba smera.
+function compareBy(key,dir,value=COLUMNS[key].value){
+  return (a,b)=>{
+    const x=value(a), y=value(b);
+    if(x===null||x===undefined) return y===null||y===undefined?0:1;
+    if(y===null||y===undefined) return -1;
+    return dir*(typeof x==="string"?x.localeCompare(y,"sr",{numeric:true}):x-y);
+  };
+}
+function sorter(fallback){
+  if(!state.sort) return fallback;
+  const cmp=compareBy(state.sort,state.dir);
+  return (a,b)=>cmp(a,b)||byDeal(a,b);
+}
+function setSort(key){
+  if(state.sort===key) state.dir=-state.dir;
+  else { state.sort=key; state.dir=COLUMNS[key].dir; }
+  render();
+}
+function sortButton(key,label=COLUMNS[key].label){
+  const active=state.sort===key;
+  return el("button",{class:"sort",type:"button",onclick:()=>setSort(key),title:"Sortiraj po koloni: "+label,
+    "aria-sort":active?(state.dir>0?"ascending":"descending"):null,
+    text:label+(active?(state.dir>0?" ▲":" ▼"):"")});
+}
+// Jedan red po modelu, posle filtera: ponuda koja je najbolja po izabranoj koloni, u njenom prirodnom smeru.
+// Sa izabranom veličinom red je najjeftinija ponuda sa tom veličinom, i kada ona sama ne bi prošla u rang.
+function oneRowPerModel(list,fallback,keep=()=>true){
+  const picked=state.sizes.size>0;
+  // Pri istoj ceni ostaje boja koja se vidi bez izabranog broja (najjeftinija dostupna boja modela), da red ne promeni patiku.
+  const shownSku=new Map();
+  if(picked) for(const o of DATA.offers.filter(o=>o.availability==="AVAILABLE").sort((a,b)=>a.price-b.price)) if(!shownSku.has(o.group)) shownSku.set(o.group,o.sku);
+  const sameColor=o=>o.sku&&shownSku.get(o.group)===o.sku?0:1;
+  const best=picked?(a,b)=>Number(a.stale)-Number(b.stale)||priceOf(a)-priceOf(b)||sameColor(a)-sameColor(b)||byDeal(a,b)
+    :!state.sort?fallback:(a,b)=>compareBy(state.sort,COLUMNS[state.sort].dir)(a,b)||byDeal(a,b);
+  const source=picked?[...new Set(list.map(o=>o.group))].flatMap(g=>filtered(byGroup.get(g)||[],true).filter(o=>o.availability==="AVAILABLE"&&keep(o))):list;
+  const rows=new Map();
+  for(const o of source.slice().sort(best)){
+    if(rows.has(o.group)) rows.get(o.group).others+=1; else rows.set(o.group,{offer:o,others:0});
+  }
+  for(const r of rows.values()) r.offer.other_offers=r.others;
+  return [...rows.values()].map(r=>r.offer).sort(sorter(fallback));
+}
+function eligible(){ return DATA.offers.filter(o=>o.in_personal_ranking&&forGender(o)); }
+const byGroup=new Map();
+for(const o of DATA.offers){ if(!byGroup.has(o.group)) byGroup.set(o.group,[]); byGroup.get(o.group).push(o); }
+
+// Slika ponude; bez nje slika istog modela iz druge ponude, pa natpis umesto slike.
+function shoeImage(o){
+  const other=(byGroup.get(o.group)||[]).find(x=>safeUrl(x.image_url));
+  const src=safeUrl(o.image_url)||(other?other.image_url:null);
+  const blank=()=>el("div",{class:"thumb none",text:"bez slike"});
+  if(!src) return blank();
+  // U artifaktu slike sa sajtova prodavnica nisu dozvoljene, pa se crta sličica iz priloženog lista (thumbs/N.webp).
+  if(window.DEAL_STATIC){
+    const t=(DATA.thumbs||{})[o.image_url]||(other&&(DATA.thumbs||{})[other.image_url]);
+    if(!t) return blank();
+    const [sheet,col,row,rows]=t, grid=16;
+    return el("div",{class:"thumb",role:"img","aria-label":fullName(o),
+      style:`background:#fff url(thumbs/${sheet}.webp) ${col/(grid-1)*100}% ${rows>1?row/(rows-1)*100:0}%/${grid*100}% ${rows*100}% no-repeat`});
+  }
+  const img=el("img",{class:"thumb",src,alt:fullName(o),loading:"lazy",referrerpolicy:"no-referrer",onerror:()=>img.replaceWith(blank())});
+  return img;
+}
+const CHANGES={new_low:"▼ Nova najniža cena",down:"▼ Cena snižena",up:"▲ Cena podignuta"};
+const CHANGE_ORDER=Object.keys(CHANGES);
+const byChange=(a,b)=>{
+  const x=a.history.last_change, y=b.history.last_change;
+  return CHANGE_ORDER.indexOf(x.kind)-CHANGE_ORDER.indexOf(y.kind)||y.at.localeCompare(x.at)||Math.abs(y.pct)-Math.abs(x.pct);
+};
+function changeBadge(o){
+  const c=o.history.last_change;
+  if(!c) return null;
+  const help=c.kind==="new_low"?`Najniža cena koju smo zabeležili za ovaj oglas od ${when(c.tracked_since)}.`:"Promena između dva naša očitavanja istog oglasa.";
+  return el("div",{class:"change "+c.kind,title:help},CHANGES[c.kind],
+    el("span",{class:"small",text:`bila ${rsd(c.from)} (${pct(c.pct)}), ${when(c.at)}`}));
+}
+function offerCard(o) {
+  const clsName = ["EXCEPTIONAL","VERY GOOD","GOOD"].includes(o.classification)?"top":o.classification==="OVERPRICED"?"over":o.classification==="INSUFFICIENT DATA"?"none":"";
+  const hist = o.history.advantage!==null?`Istorija: ${pct(o.history.advantage)}`:`Istorija: nema dovoljno podataka (${o.history.observations} opažanja)`;
+  const summary = el("summary",{},
+    el("div",{class:"who"},
+      shoeImage(o),
+      el("div",{},
+        el("div",{class:"name",text:fullName(o)}),
+        el("div",{class:"small",text:o.categories.map(c=>CATS[c]||c).join(", ")||"kategorija nije navedena"}),
+        el("div",{class:"small",text:o.title}),
+        el("div",{class:"small",text:`Provereno: ${when(o.observed_at)}`}))),
+    el("div",{},
+      el("div",{class:"lbl",text:"Cena"}),
+      el("div",{class:"price",text:rsd(priceOf(o))}),
+      o.old_price?el("div",{class:"old",text:rsd(o.old_price)}):null,
+      changeBadge(o),
+      el("div",{class:"small",text:o.retailer_name+(o.seller?" / "+o.seller:"")}),
+      o.sku?el("div",{class:"small",text:"SKU "+o.sku}):null,
+      o.other_offers?el("div",{class:"small",text:`još ${o.other_offers} ponuda ovog modela (u detaljima)`}):null),
+    el("div",{title:o.claimed_discount!==null?"Popust prodavca: "+CLAIM[o.claim_status]:"Prodavac ne navodi popust"},
+      el("div",{class:"lbl",text:"Popust"}),
+      el("div",{class:"big",text:discountText(o)})),
+    el("div",{},
+      el("div",{class:"lbl",text:"Tržište"}),
+      el("div",{class:"big",text:o.market_advantage===null?"-":pct(o.market_advantage)}),
+      el("div",{class:"small",text:o.market_advantage===null?"nema poređenja":`medijana ${rsd(o.market_median)}, ${o.market_retailers} drugih`}),
+      el("div",{class:"small",text:hist})),
+    el("div",{title:MSRP_HELP},
+      el("div",{class:"lbl",text:"Cena u SAD"}),
+      el("div",{class:"big",text:vsMsrp(o)===null?"-":pctWhole(vsMsrp(o))}),
+      el("div",{class:"small",text:msrpLine(o)}),
+      o.old_price&&o.msrp_rsd?el("div",{class:"small",text:"precrtana "+pctWhole(o.old_price/o.msrp_rsd-1)}):null),
+    el("div",{title:EU_HELP},
+      el("div",{class:"lbl",text:"Cena u EU"}),
+      euCell(o)),
+    el("div",{class:"small"},
+      el("div",{class:"lbl",text:"Veličine"}),
+      sizeNodes(o)),
+    el("div",{title:o.review_source||"",},
+      el("div",{class:"lbl",text:"Ocena"}),
+      el("div",{class:"big",text:o.review_score!==null?o.review_score:"-"}),
+      el("div",{class:"small",text:o.review_score!==null?"/100":"nema"})),
+    el("div",{},
+      el("div",{class:"lbl",text:"Skor"}),
+      el("div",{class:"score",text:o.score===null?"-":o.score}),
+      el("div",{class:"cls "+clsName,text:o.classification}),
+      el("div",{class:"small",text:"Pouzdanost: "+o.confidence})),
+    storeLinks(o.group));
+  const d = el("details",{class:"offer"},summary);
+  d.addEventListener("toggle",()=>{ if(d.open && !d.dataset.built){ d.dataset.built="1"; d.append(offerDetail(o)); }},{once:false});
+  return d;
+}
+function offerDetail(o) {
+  const sizes = (o.sizes||[]).map(s=>{
+    const want = state.sizes.has(s.norm);
+    const extra = [s.cm?s.cm+" cm":null, s.us?"US "+s.us:null, s.price?rsd(s.price):null, s.stock_note].filter(Boolean).join(" | ");
+    return el("span",{class:"size"+(s.available===false?" no":"")+(want?" want":""),title:extra,text:s.label});
+  });
+  const conditional = [];
+  if (o.loyalty_price) conditional.push(el("li",{text:`Uslovna (loyalty) cena ${rsd(o.loyalty_price)}: ${o.loyalty_condition||""}. Nije javna cena.`}));
+  if (o.coupon_price) conditional.push(el("li",{text:`Kupon ${rsd(o.coupon_price)}: ${o.coupon_condition||""}`}));
+  return el("div",{class:"detail"},
+    el("div",{},
+      el("h4",{text:"Zašto ova klasa"}), el("ul",{},o.reasons.map(r=>el("li",{text:r}))),
+      o.warnings.length?el("h4",{class:"flag",text:"Upozorenja"}):null,
+      o.warnings.length?el("ul",{},o.warnings.map(r=>el("li",{text:r}))):null,
+      conditional.length?el("h4",{text:"Uslovne cene"}):null, conditional.length?el("ul",{},conditional):null,
+      el("h4",{text:"Veličine (kako ih navodi prodavac)"}),
+      sizes.length?el("div",{class:"sizes"},sizes):el("div",{class:"small",text:"Prodavac ne navodi veličine: UNKNOWN"}),
+      el("div",{class:"small",text:o.delivery_rsd!==null?`Dostava: ${rsd(o.delivery_rsd)} (${o.delivery_note||""})`:"Dostava: nepoznata"}),
+      safeUrl(o.url)?el("a",{class:"buy",href:safeUrl(o.url),target:"_blank",rel:"noopener",text:"Otvori tačnu stranicu proizvoda"}):null),
+    el("div",{},
+      el("h4",{text:"Kvalitet (nezavisni izvor)"}),
+      el("div",{class:"small",text:o.cushioning||"Amortizacija nije navedena u izvoru"}),
+      el("div",{class:"small",text:"Pena: "+(o.midsole_foam||"nije potvrđeno")+" | Ploča: "+(o.plate||"nije potvrđeno")}),
+      o.category_basis?el("div",{class:"small",text:"Osnova kategorije: "+o.category_basis}):null,
+      safeUrl(o.catalog_url)?el("a",{class:"small",href:safeUrl(o.catalog_url),target:"_blank",rel:"noopener",text:"Izvor kataloga"}):null,
+      el("h4",{text:"Istorija cene modela po prodavnicama"}),
+      historyChart(o),
+      el("h4",{text:"Sve ponude ovog modela"}),
+      groupTable(o.group),
+      el("h4",{text:"Cene u EU"}),
+      euTable(o)));
+}
+// Jedan link po prodavnici: njena najjeftinija dostupna ponuda, a sa izabranim veličinama najjeftinija koja ih ima.
+function storeLinks(group){
+  const picks=new Map();
+  for(const o of byGroup.get(group)||[]){
+    if(o.availability!=="AVAILABLE"||o.stale||!hasPicked(o)) continue;
+    const cur=picks.get(o.retailer);
+    if(!cur||priceOf(o)<priceOf(cur)) picks.set(o.retailer,o);
+  }
+  const stores=[...picks.values()].sort((a,b)=>priceOf(a)-priceOf(b));
+  return el("div",{class:"stores"},
+    stores.length?null:el("span",{class:"small",text:state.sizes.size?"Nema izabranih veličina":"Nema na stanju"}),
+    stores.map(o=>safeUrl(o.url)?el("a",{
+      class:"store",href:safeUrl(o.url),target:"_blank",rel:"noopener"},
+      o.retailer_name+" "+rsd(priceOf(o)),liveLabels(o).length?el("span",{}," | ",sizeNodes(o)):null):null),
+    handChecks(group),
+    byGroup.get(group)?.[0]?markButton(byGroup.get(group)[0]):null);
+}
+// Prodavnice koje blokiraju automatsku proveru: dugme samo otvara pretragu, a cena ne ulazi u poređenje.
+const BY_HAND=[["Đak Sport","djaksport.com"],["Planeta Sport","planetasport.rs"]];
+function handChecks(group){
+  const o=(byGroup.get(group)||[])[0];
+  if(!o) return [];
+  return BY_HAND.map(([name,host])=>el("a",{class:"store hand",target:"_blank",rel:"noopener",
+    href:"https://www.google.com/search?q="+encodeURIComponent(`site:${host} ${o.brand} ${o.model}`),
+    title:"Otvara Google pretragu tog sajta u tvom browseru. Cena se ne upisuje i ne ulazi u poređenje.",
+    text:"Proveri: "+name}));
+}
+function liveSizes(o){ return liveLabels(o).join(", ")||"nepoznato"; }
+// Izabrane veličine su istaknute, da se u dugom spisku odmah vide.
+function sizeNodes(o){
+  const labels=liveLabels(o);
+  if(!labels.length) return ["nepoznato"];
+  return labels.flatMap((l,i)=>[i?", ":null,state.sizes.has(l)?el("span",{class:"picked",text:l}):l]);
+}
+function groupTable(group){
+  const rows=DATA.offers.filter(o=>o.group===group).sort((a,b)=>priceOf(a)-priceOf(b));
+  return el("div",{class:"tablewrap"},el("table",{},
+    el("thead",{},el("tr",{},["Prodavnica","SKU","Cena","Popust","Veličine","Skor",""].map(t=>el("th",{text:t})))),
+    el("tbody",{},rows.map(o=>el("tr",{},
+      el("td",{text:o.retailer_name+(o.seller?" / "+o.seller:"")}),el("td",{text:o.sku||"-"}),
+      el("td",{class:"num",text:rsd(priceOf(o))}),el("td",{class:"num",text:discountText(o)}),
+      el("td",{text:o.availability==="AVAILABLE"?liveSizes(o):AVAIL[o.availability]}),
+      el("td",{class:"num",text:o.score===null?"-":o.score}),
+      el("td",{},safeUrl(o.url)?el("a",{href:safeUrl(o.url),target:"_blank",rel:"noopener",text:"Otvori"}):"-"))))));
+}
+function modelsView(){
+  const groups=new Map();
+  for(const o of filtered(profileOffers(),true)){ if(!groups.has(o.group)) groups.set(o.group,[]); groups.get(o.group).push(o); }
+  const rows=[...groups.values()].map(list=>{
+    const live=list.filter(o=>o.availability==="AVAILABLE").sort((a,b)=>priceOf(a)-priceOf(b));
+    // Skor modela je skor njegove najbolje dostupne ponude.
+    const best=(state.sizes.size?live:live.slice().sort((a,b)=>high(a,b,o=>o.score)))[0]||null;
+    return {head:list[0],list,live,best};
+  });
+  const byName=(a,b)=>fullName(a.head).localeCompare(fullName(b.head),"sr",{numeric:true});
+  // Model bez ponude na stanju nema vrednost po kojoj se sortira, pa ide na kraj; cena je najniža cena modela.
+  const rowValue=r=>{
+    const o=state.sort==="price"?r.live[0]:r.best;
+    if(state.sort==="name"||state.sort==="review") return COLUMNS[state.sort].value(r.head);
+    return o?COLUMNS[state.sort].value(o):null;
+  };
+  rows.sort(state.sort?(a,b)=>compareBy(state.sort,state.dir,rowValue)(a,b)||byName(a,b):byName);
+  if(!rows.length) return [el("div",{class:"empty",text:"Nema modela za izabrane filtere."})];
+  const link=(o,text)=>safeUrl(o.url)?el("a",{href:safeUrl(o.url),target:"_blank",rel:"noopener",text}):text;
+  return [el("p",{class:"note",text:`${rows.length} modela, svih veličina. Tu su i modeli koje prodavnice vode pod trčanjem, a nisu u nezavisnom katalogu; oni nemaju ocenu. Različite generacije, polovi i varijante su odvojeni. Uz svaku prodavnicu su cena i veličine na stanju.`}),
+    el("div",{class:"tablewrap"},el("table",{},
+      el("thead",{},el("tr",{},["name","score","discount","market","msrp","eu","review"].map(k=>el("th",{},sortButton(k))),
+        el("th",{text:"Gde kupiti (cena | veličine)"}),el("th",{},sortButton("price","Najjeftinije")))),
+      el("tbody",{},rows.map(r=>{
+        const cheap=r.live[0];
+        return el("tr",{},
+          el("td",{},el("div",{class:"who"},shoeImage(r.best||r.head),el("div",{class:"name",text:fullName(r.head)}))),
+          el("td",{class:"num",text:r.best&&r.best.score!==null?r.best.score:"-"}),
+          el("td",{class:"num",title:"Popust koji navodi prodavac, za ponudu čiji je skor prikazan",text:discountText(r.best)}),
+          el("td",{class:"num",title:"Cena u odnosu na medijanu drugih prodavnica, za ponudu čiji je skor prikazan",text:r.best&&r.best.market_advantage!==null?pct(r.best.market_advantage):"-"}),
+          el("td",{title:MSRP_HELP},
+            el("div",{class:"num",text:r.best&&vsMsrp(r.best)!==null?pctWhole(vsMsrp(r.best)):"-"}),
+            el("div",{class:"small",text:msrpLine(r.head)})),
+          el("td",{title:EU_HELP},euCell(r.best||r.head)),
+          el("td",{class:"num",text:r.head.review_score!==null?r.head.review_score+"/100":"nema"}),
+          el("td",{},storeLinks(r.head.group)),
+          el("td",{},cheap?el("div",{},link(cheap,rsd(priceOf(cheap)))," ",cheap.retailer_name):"Nema na stanju"));
+      }))))];
+}
+function retailerColor(key){ const i=RETAILER_ORDER.indexOf(key); return `var(--s${(i%8)+1})`; }
+function historyChart(offer) {
+  const related = DATA.offers.filter(o=>o.group===offer.group);
+  const series = {};
+  for (const o of related) { const k=o.retailer; series[k]=series[k]||{name:o.retailer_name,points:new Map()};
+    for (const p of o.history_points){ const prev=series[k].points.get(p.at); if(prev===undefined||p.price<prev) series[k].points.set(p.at,p.price);} }
+  const keys = Object.keys(series).sort((a,b)=>RETAILER_ORDER.indexOf(a)-RETAILER_ORDER.indexOf(b));
+  const all = keys.flatMap(k=>[...series[k].points.entries()]);
+  const times = [...new Set(all.map(p=>p[0]))].sort();
+  const wrap = el("div",{class:"chart"});
+  if (times.length<2) {
+    wrap.append(el("div",{class:"small",text:`INSUFFICIENT DATA: zabeležen je samo ${times.length} sken. Grafik se pojavljuje od drugog skena; cene se ne izmišljaju.`}));
+    wrap.append(historyTable(keys,series,times));
+    return wrap;
+  }
+  const W=520,H=190,L=58,R=12,T=10,B=24;
+  const tv=times.map(t=>new Date(t+"Z").getTime()); const t0=tv[0], t1=tv[tv.length-1];
+  const prices=all.map(p=>p[1]); let lo=Math.min(...prices), hi=Math.max(...prices); if(lo===hi){lo*=.95;hi*=1.05;} const pad=(hi-lo)*.08; lo-=pad;hi+=pad;
+  const x=t=>L+(new Date(t+"Z").getTime()-t0)/(t1-t0||1)*(W-L-R), y=v=>T+(hi-v)/(hi-lo)*(H-T-B);
+  const NS="http://www.w3.org/2000/svg";
+  const s=(tag,a)=>{const n=document.createElementNS(NS,tag);for(const[k,v]of Object.entries(a))n.setAttribute(k,v);return n;};
+  const svg=s("svg",{viewBox:`0 0 ${W} ${H}`,width:"100%",role:"img","aria-label":"Istorija cene po prodavnicama"});
+  for(let i=0;i<=3;i++){const v=lo+(hi-lo)*i/3;const yy=y(v);
+    svg.append(s("line",{x1:L,x2:W-R,y1:yy,y2:yy,stroke:"var(--grid)","stroke-width":1}));
+    const label=s("text",{x:L-6,y:yy+4,"text-anchor":"end","font-size":11,fill:"var(--muted)"});label.textContent=Math.round(v).toLocaleString("sr-RS");svg.append(label);}
+  [times[0],times[times.length-1]].forEach((t,i)=>{const label=s("text",{x:x(t),y:H-6,"text-anchor":i?"end":"start","font-size":11,fill:"var(--muted)"});label.textContent=new Date(t+"Z").toLocaleDateString("sr-RS");svg.append(label);});
+  for(const k of keys){const pts=[...series[k].points.entries()].sort();const color=retailerColor(k);
+    if(pts.length>1) svg.append(s("polyline",{points:pts.map(([t,v])=>`${x(t)},${y(v)}`).join(" "),fill:"none",stroke:color,"stroke-width":2,"stroke-linejoin":"round"}));
+    pts.slice(-1).forEach(([t,v])=>svg.append(s("circle",{cx:x(t),cy:y(v),r:4,fill:color,stroke:"var(--surface)","stroke-width":2})));}
+  const cross=s("line",{y1:T,y2:H-B,stroke:"var(--axis)","stroke-width":1,visibility:"hidden"});svg.append(cross);
+  const tip=el("div",{class:"tip"});
+  const hit=s("rect",{x:L,y:T,width:W-L-R,height:H-T-B,fill:"transparent",tabindex:0});svg.append(hit);
+  const show=clientX=>{const box=svg.getBoundingClientRect();const px=(clientX-box.left)/box.width*W;
+    let best=times[0];for(const t of times) if(Math.abs(x(t)-px)<Math.abs(x(best)-px)) best=t;
+    cross.setAttribute("x1",x(best));cross.setAttribute("x2",x(best));cross.setAttribute("visibility","visible");
+    tip.replaceChildren(el("div",{class:"small",text:when(best)}));
+    for(const k of keys){const v=series[k].points.get(best);if(v===undefined)continue;
+      const key=el("span",{class:"key"});key.style.background=retailerColor(k);
+      tip.append(el("div",{},key,el("b",{text:rsd(v)})," ",series[k].name));}
+    tip.style.display="block";const left=x(best)/W*box.width;tip.style.left=Math.min(left+10,box.width-170)+"px";tip.style.top="24px";};
+  hit.addEventListener("pointermove",e=>show(e.clientX));
+  hit.addEventListener("pointerleave",()=>{tip.style.display="none";cross.setAttribute("visibility","hidden");});
+  hit.addEventListener("focus",()=>{const b=svg.getBoundingClientRect();show(b.right-20);});
+  hit.addEventListener("blur",()=>{tip.style.display="none";cross.setAttribute("visibility","hidden");});
+  if(keys.length>=2){wrap.append(el("div",{class:"legend"},keys.map(k=>{const key=el("span",{class:"key"});key.style.background=retailerColor(k);return el("span",{},key,series[k].name);})));}
+  else {wrap.append(el("div",{class:"small",text:series[keys[0]].name}));}
+  wrap.append(svg,tip,historyTable(keys,series,times));
+  return wrap;
+}
+function historyTable(keys,series,times){
+  const recent=times.slice(-6).reverse();
+  return el("div",{class:"tablewrap"},el("table",{},
+    el("thead",{},el("tr",{},el("th",{text:"Datum"}),keys.map(k=>el("th",{text:series[k].name})))),
+    el("tbody",{},recent.map(t=>el("tr",{},el("td",{text:when(t)}),keys.map(k=>el("td",{class:"num",text:series[k].points.has(t)?rsd(series[k].points.get(t)):"-"})))))));
+}
+function list(title,note,offers,limit){
+  const shown=limit?offers.slice(0,limit):offers;
+  return [el("p",{class:"note",text:note}),
+    shown.length?el("div",{class:"cols"},Object.keys(COLUMNS).map(k=>el("div",{},sortButton(k)))):null,
+    shown.length?el("div",{},shown.slice(0,300).map(offerCard)):el("div",{class:"empty",text:"Nema ponuda koje prolaze filtere. Proveri da li je pokrenut sken ili olabavi filtere."}),
+    shown.length>300?el("p",{class:"small",text:`Prikazano prvih 300 od ${shown.length}. Suzi filtere ili izvezi CSV.`}):null];
+}
+const RANK_TABS=["top","cheap","long","daily","speed"];
+const isSearching=()=>state.q.trim()!==""&&RANK_TABS.includes(state.tab);
+const TOP_MIN_SIZES=4;
+const enoughSizes=o=>liveLabels(o).length>=TOP_MIN_SIZES;
+// Liste po oceni zadržavaju redosled kao bez izabranog broja: izabrani broj menja samo prodavnicu i cenu u redu,
+// a modeli koji taj broj nigde nemaju ispadaju i mesto im popunjavaju sledeći.
+const KEEP_ORDER_TABS=["top","long","daily","speed"];
+function rankedRows(){
+  const searching=isSearching();
+  // Pretraga po imenu mora da nađe model i kada on ne ulazi u rang, npr. zbog niske pouzdanosti.
+  const elig=searching?filtered(profileOffers(),true).filter(o=>o.availability==="AVAILABLE"):filtered(eligible());
+  const cap=n=>searching?undefined:n;
+  switch(state.tab){
+    // Pretraga i dalje nalazi svaki model; pravilo o brojevima važi za samu listu Top 20.
+    case "top": return searching?{rows:oneRowPerModel(elig,byDeal)}:{rows:oneRowPerModel(elig.filter(enoughSizes),byDeal,enoughSizes),limit:20};
+    case "cheap": return {rows:oneRowPerModel(elig,(a,b)=>priceOf(a)-priceOf(b)),limit:cap(30)};
+    case "long": return {rows:oneRowPerModel(elig.filter(o=>o.categories.includes("long_run")),byDeal),limit:cap(20)};
+    case "daily": return {rows:oneRowPerModel(elig.filter(o=>o.categories.includes("daily_trainer")),byDeal),limit:cap(20)};
+    case "speed": return {rows:oneRowPerModel(elig.filter(o=>o.categories.includes("tempo")||o.categories.includes("racing")),byDeal),limit:cap(20)};
+  }
+}
+function viewOffers(){
+  DATA.offers.forEach(o=>{o.other_offers=0;});
+  if(RANK_TABS.includes(state.tab)){
+    let base=null;
+    if(state.sizes.size&&!state.sort&&KEEP_ORDER_TABS.includes(state.tab)){
+      const picked=state.sizes; state.sizes=new Set();
+      try{ base=new Map(rankedRows().rows.map((o,i)=>[o.group,i])); } finally{ state.sizes=picked; }
+      DATA.offers.forEach(o=>{o.other_offers=0;});
+    }
+    const {rows,limit}=rankedRows();
+    const at=o=>base.has(o.group)?base.get(o.group):Infinity;
+    const ordered=base?rows.map((o,i)=>[o,i]).sort((a,b)=>at(a[0])-at(b[0])||a[1]-b[1]).map(r=>r[0]):rows;
+    return ordered.slice(0,limit);
+  }
+  switch(state.tab){
+    case "changes": return filtered(profileOffers(),true).filter(o=>o.history.last_change&&o.availability==="AVAILABLE").sort(sorter(byChange));
+    case "all": return filtered(DATA.offers,true).slice().sort(sorter(byDeal));
+    default: return filtered(profileOffers());
+  }
+}
+const NOTES = {
+  top:"Jedan red po modelu, sa njegovom najboljom ponudom koja ima bar 4 različita broja na stanju. Dostupno, i pouzdanost po filteru. Klasa zavisi od dokaza o ceni, a ne od popusta koji prodavac tvrdi. Klikni na naziv kolone da sortiraš; drugi klik obrće smer. Cena u SAD je preporučena cena proizvođača, bez američkog poreza, a ne ulična cena.",
+  cheap:"Najniže cene dostupnih modela. Klikni na naziv kolone da sortiraš; drugi klik obrće smer.",
+  long:"Kategorija 'duge staze' je izvedena iz RunRepeat oznaka; pravilo piše u detaljima svake ponude.",
+  daily:"Modeli koje RunRepeat vodi pod tempom 'Daily running'.",
+  speed:"Modeli koje RunRepeat vodi pod tempom 'Tempo' ili 'Competition'.",
+  changes:"Dostupne ponude kojima se cena promenila u poslednja 3 dana: prvo nove najniže, pa sniženja, pa poskupljenja. Računaju se samo cene koje smo sami očitali, a ne popusti koje prodavac navodi. Svaka boja i prodavnica je poseban red.",
+  all:"Sve ponude, svih boja, veličina i oba pola, uključujući one bez dovoljno podataka. Nema filtera po polu ni pouzdanosti.",
+};
+function compareView(){
+  const offers=Object.fromEntries(DATA.offers.map(o=>[o.listing_id,o]));
+  const visible=new Set(filtered(DATA.offers).map(o=>o.group));
+  const rows=DATA.comparisons.filter(c=>visible.has(c.group)&&forGender(c));
+  if(!rows.length) return [el("div",{class:"empty",text:"Nema poređenja za izabrane filtere."})];
+  return [el("p",{class:"note",text:"Pol i varijanta (npr. GTX) se nikad ne mešaju u istom poređenju. Različite boje istog modela su odvojene ponude."}),
+   ...rows.slice(0,150).map(c=>{
+    const all=DATA.offers.filter(o=>o.group===c.group).sort((x,y)=>priceOf(x)-priceOf(y));
+    const head=all[0];
+    // Sa izabranim brojem poređenje je samo među ponudama koje taj broj imaju na stanju.
+    const picked=state.sizes.size>0;
+    const list=picked?all.filter(o=>o.availability==="AVAILABLE"&&hasPicked(o)):all;
+    const hidden=all.length-list.length;
+    let a=offers[c.cheapest_available], b=offers[c.second_cheapest], diff=c.difference_rsd, diffPct=c.difference_pct;
+    if(picked){
+      const live=[...new Map(list.map(o=>[o.retailer,o])).values()];  // najjeftinija ponuda po prodavnici
+      [a,b]=[live[0]||null,live[1]||null];
+      diff=a&&b?priceOf(b)-priceOf(a):null; diffPct=a&&b?priceOf(b)/priceOf(a)-1:null;
+    }
+    return el("div",{class:"group"},
+      el("h3",{text:`${fullName(head)} | ${head.gender}`}),
+      el("div",{class:"small",text:[
+        a?`Najjeftinije dostupno${picked?" u izabranom broju":""}: ${a.retailer_name} ${rsd(priceOf(a))}`:"Nema potvrđeno dostupne ponude",
+        b?`Sledeći: ${b.retailer_name} ${rsd(priceOf(b))} (razlika ${rsd(diff)}, ${pct(diffPct)})`:null,
+        hidden?`Sakriveno ${hidden} ponuda bez izabranog broja`:null,
+        `Provereno prodavnica: ${c.retailers_verified}; imaju model: ${c.retailers_carrying}`,
+        c.not_verified.length?`NOT VERIFIED: ${c.not_verified.join(", ")}`:null].filter(Boolean).join(" | ")}),
+      el("div",{class:"tablewrap"},el("table",{},
+        el("thead",{},el("tr",{},["Prodavnica","SKU","Cena","Precrtana","Popust","Stanje","Veličine","Provereno",""].map(t=>el("th",{text:t})))),
+        el("tbody",{},list.map(o=>el("tr",{},
+          el("td",{text:o.retailer_name+(o.seller?" / "+o.seller:"")}),el("td",{text:o.sku||"-"}),
+          el("td",{class:"num",text:rsd(priceOf(o))}),el("td",{class:"num",text:o.old_price?rsd(o.old_price):"-"}),el("td",{class:"num",text:discountText(o)}),
+          el("td",{text:AVAIL[o.availability]}),el("td",{},o.availability==="AVAILABLE"?sizeNodes(o):AVAIL[o.availability]),
+          el("td",{text:when(o.observed_at)}),
+          el("td",{},safeUrl(o.url)?el("a",{href:safeUrl(o.url),target:"_blank",rel:"noopener",text:"Otvori"}):"-")))))));
+  })];
+}
+function storesView(){
+  return [el("p",{class:"note",text:"NOT VERIFIED znači da sajt nije proveren. To ne znači da proizvod ne postoji."}),
+    el("div",{class:"tablewrap"},el("table",{},
+    el("thead",{},el("tr",{},["Prodavnica","Status","Stranice ok/neuspešne","Oglasi","Proveren","Napomena"].map(t=>el("th",{text:t})))),
+    el("tbody",{},DATA.retailers.map(r=>el("tr",{},
+      el("td",{text:r.name}),el("td",{text:STAT[r.status]||r.status}),el("td",{class:"num",text:`${r.pages_ok}/${r.pages_failed}`}),
+      el("td",{class:"num",text:r.listings}),el("td",{text:when(r.checked_at)}),el("td",{class:"small",text:r.message||""}))))))];
+}
+function simpleList(items,render,emptyText,note){
+  return [note?el("p",{class:"note",text:note}):null, items.length?el("div",{class:"tablewrap"},el("table",{},el("tbody",{},items.slice(0,500).map(render)))):el("div",{class:"empty",text:emptyText})];
+}
+function render(){
+  document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===state.tab));
+  const box=document.getElementById("content"); box.replaceChildren();
+  let nodes;
+  if(state.notice) box.append(noticeBar());
+  if(state.tab==="notrunning") nodes=notRunningView();
+  else if(state.tab==="models") nodes=modelsView();
+  else if(state.tab==="compare") nodes=compareView();
+  else if(state.tab==="stores") nodes=storesView();
+  else if(state.tab==="alerts") nodes=simpleList(DATA.alerts,a=>el("tr",{},el("td",{class:"small",text:when(a.created_at)}),el("td",{text:a.message})),"Nema alarma. Pravila se podešavaju u config.yaml (watchlist).","Alarmi se računaju posle skena. Aplikacija ne prati sajtove neprekidno.");
+  else if(state.tab==="review") nodes=simpleList(DATA.review,r=>el("tr",{},el("td",{text:r.retailer}),el("td",{},safeUrl(r.url)?el("a",{href:safeUrl(r.url),target:"_blank",rel:"noopener",text:r.title}):r.title),el("td",{class:"small",text:r.reason})),"Nema dvosmislenih uparivanja.","Oglasi koji nisu sigurno upareni sa katalogom. Ne ulaze u rang dok se ne razjasne.");
+  else nodes=list("",isSearching()?"Pretraga: svi modeli na stanju sa tim imenom, i oni koji nisu u rangu i imaju nisku pouzdanost ili premalo podataka. Pouzdanost piše u svakom redu. Rasprodati modeli su u kartici Svi modeli.":NOTES[state.tab]||"",viewOffers());
+  box.append(...nodes.flat().filter(Boolean));
+}
+function download(name,type,text){const url=URL.createObjectURL(new Blob([text],{type}));const a=el("a",{href:url,download:name});a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function exportCsv(){
+  const fields=["classification","score","confidence","brand","model","gender","retailer_name","seller","personal_price","old_price","discount_pct","availability","size_status","review_score","msrp_usd","msrp_rsd","observed_at","url"];
+  const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+  const row=o=>({...o,personal_price:priceOf(o),discount_pct:o.claimed_discount===null?"":Math.round(o.claimed_discount*100)});
+  download("ponude.csv","text/csv;charset=utf-8","﻿"+[fields.join(","),...viewOffers().map(o=>fields.map(f=>q(row(o)[f])).join(","))].join("\n"));
+}
+function exportJson(){download("ponude.json","application/json",JSON.stringify(viewOffers(),null,1));}
+function sizePicker(sizes){
+  const shown=el("span",{text:"Sve"});
+  const update=()=>{ shown.textContent=[...state.sizes].sort(bySize).join(", ")||"Sve"; render(); };
+  const boxes=sizes.map(v=>el("input",{type:"checkbox",value:v,onchange:e=>{
+    if(e.target.checked) state.sizes.add(v); else state.sizes.delete(v);
+    update();
+  }}));
+  const clear=el("button",{type:"button",text:"Očisti izbor",onclick:()=>{
+    state.sizes.clear(); boxes.forEach(b=>{b.checked=false;}); update();
+  }});
+  const box=el("details",{class:"multi"},el("summary",{},shown),
+    el("div",{class:"multi-panel"},
+      el("div",{class:"multi-grid"},boxes.map((b,i)=>el("label",{},b,sizes[i]))),clear));
+  document.addEventListener("click",e=>{ if(box.open&&!box.contains(e.target)) box.open=false; });
+  return el("div",{class:"field"},"Veličine",box);
+}
+function buildFilters(){
+  const offers=DATA.offers;
+  const uniq=f=>[...new Set(offers.map(f).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),"sr",{numeric:true}));
+  const select=(label,key,options,fmt)=>el("label",{},label,el("select",{onchange:e=>{state[key]=e.target.value;render();}},
+    el("option",{value:"",text:"Sve"}),options.map(v=>{const o=el("option",{value:v,text:fmt?fmt(v):v});if(state[key]===String(v))o.selected=true;return o;})));
+  // Svaki pol ima svoj spisak brojeva, pa izbor pola prazni izabrane brojeve.
+  const genderSizes=()=>sizePicker([...new Set(profileOffers().flatMap(liveLabels))].sort(bySize));
+  let picker=genderSizes();
+  const genderSelect=el("select",{onchange:e=>{
+    state.gender=e.target.value; state.sizes.clear();
+    const next=genderSizes(); picker.replaceWith(next); picker=next; render();
+  }},[["men","Muško"],["women","Žensko"]].map(([v,t])=>el("option",{value:v,text:t})));
+  genderSelect.value=state.gender;
+  const retailerNames=Object.fromEntries(DATA.retailers.map(r=>[r.retailer,r.name]));
+  document.getElementById("filters").append(
+    el("label",{},"Model",el("input",{type:"search",placeholder:"npr. Novablast",oninput:e=>{state.q=e.target.value;render();}})),
+    el("label",{},"Pol",genderSelect),
+    select("Brend","brand",uniq(o=>o.brand)),
+    picker,
+    select("Prodavnica","retailer",uniq(o=>o.retailer),v=>retailerNames[v]||v),
+    select("Kategorija","category",Object.keys(CATS),v=>CATS[v]),
+    el("label",{},"Maks. cena",el("input",{type:"number",min:0,step:500,oninput:e=>{state.maxPrice=e.target.value;render();}})),
+    el("label",{title:"Popust koji navodi prodavac; nije potvrđena ušteda"},"Min. popust %",el("input",{type:"number",min:0,max:90,step:5,oninput:e=>{state.minDiscount=e.target.value;render();}})),
+    select("Min. pouzdanost","confidence",["low","medium","high"]),
+    // Artifakt ne dozvoljava preuzimanje fajlova, pa tamo nema izvoza.
+    ...(window.DEAL_STATIC?[]:[el("button",{onclick:exportCsv,text:"Izvezi CSV"}),
+    el("button",{onclick:exportJson,text:"Izvezi JSON"})]));
+  document.getElementById("tabs").append(...TABS.map(([k,t])=>el("button",{"data-tab":k,role:"tab",onclick:()=>{state.tab=k;state.notice=null;render();},text:t})));
+}
+const p=DATA.profile;
+document.getElementById("meta").textContent=`Poslednji sken: ${when(DATA.generated_at)} | Modela u prodavnicama: ${DATA.counts.models_seen} | Sa ocenama u katalogu: ${DATA.counts.catalog_models} | Opažanja cena: ${DATA.counts.observations}`;
+if(DATA.fx) document.getElementById("meta").append(" | ",el("a",{href:"https://www.exchangerate-api.com",target:"_blank",rel:"noopener",text:"Rates By Exchange Rate API"}),`: 1 USD = ${DATA.fx.rate.toFixed(2)} RSD`+(DATA.fx.eur_rate?`, 1 EUR = ${DATA.fx.eur_rate.toFixed(2)} RSD`:""));
+if((DATA.foreign_sources||[]).length) document.getElementById("meta").append(" | Cene u EU: "+DATA.foreign_sources.map(s=>`${s.name} (${s.prices}, ${when(s.checked_at)})`).join(", "));
+buildFilters(); render();
+// Izveštaj nosi oznake iz trenutka pravljenja; server ima najnovije. Otvoren kao fajl, dashboard koristi one iz izveštaja.
+fetch("api/not-running").then(r=>r.ok?r.json():null).then(marks=>{ if(marks){ syncNotRunning(marks); render(); } }).catch(()=>{});
+// Zaglavlje kolona ostaje odmah ispod filtera i kada se filteri prelome u više redova.
+const fitHeader=()=>document.documentElement.style.setProperty("--filters-h",document.getElementById("filters").offsetHeight+"px");
+fitHeader(); addEventListener("resize",fitHeader);
+</script>
+</body>
+</html>

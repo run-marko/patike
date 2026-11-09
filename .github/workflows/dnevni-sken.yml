@@ -1,0 +1,96 @@
+# Dnevni sken cena na GitHubu, nezavisno od Markovog računara.
+# Stanje (baza, keš, sličice) je fajl stanje.tar.gz u izdanju "stanje" ovog privatnog repozitorijuma.
+# Stranica za telefon se šifruje lozinkom i objavljuje u javnom repozitorijumu patike (GitHub Pages).
+# Potrebne tajne (Settings > Secrets and variables > Actions), upisuje ih Marko:
+#   PAGE_PASSWORD  lozinka za stranicu na telefonu
+#   PAGES_TOKEN    fine-grained token sa pravom "Contents: Read and write" samo za repozitorijum patike
+name: Dnevni sken
+
+on:
+  schedule:
+    - cron: "0 5 * * *"   # 06:00 zimi i 07:00 leti po beogradskom vremenu; GitHub ume da kasni do pola sata
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "sken = pun sken i objava; proba = samo proveri koje prodavnice odgovaraju sa GitHuba"
+        type: choice
+        options: [sken, proba]
+        default: sken
+
+permissions:
+  contents: write   # za fajl izdanja "stanje"
+
+concurrency:
+  group: dnevni-sken
+  cancel-in-progress: false
+
+jobs:
+  sken:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    env:
+      TZ: Europe/Belgrade
+      GH_TOKEN: ${{ github.token }}
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Zavisnosti
+        run: pip install -r requirements.txt
+
+      - name: Preuzmi stanje
+        id: stanje
+        run: |
+          gh release download stanje --pattern stanje.tar.gz --dir "$RUNNER_TEMP"
+          python -m cloud.state unpack "$RUNNER_TEMP/stanje.tar.gz"
+          python main.py doctor | head -12
+
+      - name: Proba prodavnica
+        if: inputs.mode == 'proba'
+        run: python main.py doctor || true
+
+      - name: Sken, cene u inostranstvu, izveštaj i sličice
+        if: inputs.mode != 'proba'
+        run: |
+          set +e
+          python main.py scan --top 20; scan=$?
+          python main.py foreign
+          python main.py report
+          python main.py thumbs
+          echo "Sken je završio sa kodom $scan (1 = neka prodavnica nije proverena)."
+
+      - name: Sačuvaj stanje
+        # samo ako je stanje uspešno preuzeto, da prazna baza nikad ne zameni pravu
+        if: always() && inputs.mode != 'proba' && steps.stanje.outcome == 'success'
+        run: |
+          python -m cloud.state pack "$RUNNER_TEMP/novo-stanje.tar.gz"
+          mv "$RUNNER_TEMP/novo-stanje.tar.gz" "$RUNNER_TEMP/stanje.tar.gz"
+          gh release upload stanje "$RUNNER_TEMP/stanje.tar.gz" --clobber
+
+      - name: Šifruj stranicu za telefon
+        if: inputs.mode != 'proba' && hashFiles('reports/output/page.html') != ''
+        env:
+          PAGE_PASSWORD: ${{ secrets.PAGE_PASSWORD }}
+        run: |
+          test -n "$PAGE_PASSWORD" || { echo "Nema tajne PAGE_PASSWORD"; exit 1; }
+          mkdir -p site/thumbs
+          cp reports/output/thumbs/*.webp site/thumbs/ || true
+          node cloud/encrypt_page.mjs reports/output/page.html site/index.html
+          touch site/.nojekyll
+          printf 'User-agent: *\nDisallow: /\n' > site/robots.txt
+
+      - name: Objavi stranicu
+        if: inputs.mode != 'proba' && hashFiles('site/index.html') != ''
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          personal_token: ${{ secrets.PAGES_TOKEN }}
+          external_repository: ${{ github.repository_owner }}/patike
+          publish_branch: gh-pages
+          publish_dir: ./site
+          force_orphan: true   # bez istorije, da javni repozitorijum ne raste svaki dan
+          commit_message: "Dashboard"
