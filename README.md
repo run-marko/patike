@@ -247,9 +247,9 @@ istu stranicu taj izvor staje, sa statusom PARTIAL.
   neuspešne stranice.
 
 ## Sken na GitHubu (nezavisno od računara)
-- `.github/workflows/dnevni-sken.yml` svako jutro (05:00 UTC) radi sken, cene u inostranstvu, izveštaj i sličice.
-- Stanje (baza, keš, kurs, oznake, sličice) je `stanje.tar.gz` u izdanju `stanje` privatnog repozitorijuma; `python -m cloud.state pack|unpack`.
-- Stranica za telefon se šifruje lozinkom (`cloud/encrypt_page.mjs`, AES-GCM + PBKDF2, samo ugrađeni Node moduli) i objavljuje u javnom repozitorijumu `patike` (GitHub Pages). Nešifrovana stranica i baza nikad nisu javne.
-- Tajne upisuje vlasnik: `PAGE_PASSWORD` i `PAGES_TOKEN` (fine-grained token, Contents: Read and write, samo za `patike`).
+- Javni repozitorijum `run-marko/patike`: `.github/workflows/dnevni-sken.yml` svako jutro (05:00 UTC) radi sken, cene u inostranstvu, izveštaj i sličice. Javni repozitorijumi nemaju ograničenje minuta.
+- Stanje (baza, keš, kurs, oznake, sličice) je `stanje.enc` u izdanju `stanje`, šifrovano lozinkom (`cloud/crypt.mjs`, AES-256-GCM + PBKDF2, samo ugrađeni Node moduli); `python -m cloud.state pack|unpack`.
+- Stranica za telefon (https://run-marko.github.io/patike/) se šifruje istom lozinkom (`cloud/encrypt_page.mjs`) i objavljuje na grani `gh-pages`. Nešifrovana stranica i baza nikad nisu javne.
+- Jedina tajna je `PAGE_PASSWORD`. Postavlja je i šalje prvu šifrovanu bazu vlasnik: `cloud/postavi-lozinku.ps1` (lozinku kuca sam).
 - Ručno: Actions > Dnevni sken > Run workflow; `proba` samo proverava koje prodavnice odgovaraju sa GitHuba.
-- Oznake "Nije za trčanje" se na GitHubu ne menjaju; lokalne izmene se prenose novim `stanje.tar.gz`.
+- Oznake "Nije za trčanje" se na GitHubu ne menjaju; lokalne izmene se prenose ponovnim pokretanjem `postavi-lozinku.ps1`.

@@ -1,9 +1,8 @@
 # Dnevni sken cena na GitHubu, nezavisno od Markovog računara.
-# Stanje (baza, keš, sličice) je fajl stanje.tar.gz u izdanju "stanje" ovog privatnog repozitorijuma.
-# Stranica za telefon se šifruje lozinkom i objavljuje u javnom repozitorijumu patike (GitHub Pages).
-# Potrebne tajne (Settings > Secrets and variables > Actions), upisuje ih Marko:
-#   PAGE_PASSWORD  lozinka za stranicu na telefonu
-#   PAGES_TOKEN    fine-grained token sa pravom "Contents: Read and write" samo za repozitorijum patike
+# Repozitorijum je javan (bez ograničenja minuta), pa se ništa osetljivo ne čuva otvoreno:
+#  - stanje (baza, keš, kurs, oznake, sličice) je stanje.enc u izdanju "stanje", šifrovano lozinkom
+#  - stranica za telefon se šifruje istom lozinkom i objavljuje na grani gh-pages (GitHub Pages)
+# Jedina tajna: PAGE_PASSWORD (upisuje je Marko skriptom cloud/postavi-lozinku.ps1).
 name: Dnevni sken
 
 on:
@@ -18,7 +17,7 @@ on:
         default: sken
 
 permissions:
-  contents: write   # za fajl izdanja "stanje"
+  contents: write   # fajl izdanja "stanje" i grana gh-pages
 
 concurrency:
   group: dnevni-sken
@@ -31,6 +30,7 @@ jobs:
     env:
       TZ: Europe/Belgrade
       GH_TOKEN: ${{ github.token }}
+      PAGE_PASSWORD: ${{ secrets.PAGE_PASSWORD }}
       PYTHONUNBUFFERED: "1"
     steps:
       - uses: actions/checkout@v4
@@ -43,12 +43,14 @@ jobs:
       - name: Zavisnosti
         run: pip install -r requirements.txt
 
-      - name: Preuzmi stanje
+      - name: Preuzmi i dešifruj stanje
         id: stanje
         run: |
-          gh release download stanje --pattern stanje.tar.gz --dir "$RUNNER_TEMP"
+          test -n "$PAGE_PASSWORD" || { echo "Nema tajne PAGE_PASSWORD"; exit 1; }
+          gh release download stanje --pattern stanje.enc --dir "$RUNNER_TEMP"
+          node cloud/crypt.mjs dec "$RUNNER_TEMP/stanje.enc" "$RUNNER_TEMP/stanje.tar.gz"
           python -m cloud.state unpack "$RUNNER_TEMP/stanje.tar.gz"
-          python main.py doctor | head -12
+          rm "$RUNNER_TEMP/stanje.tar.gz"
 
       - name: Proba prodavnica
         if: inputs.mode == 'proba'
@@ -64,20 +66,19 @@ jobs:
           python main.py thumbs
           echo "Sken je završio sa kodom $scan (1 = neka prodavnica nije proverena)."
 
-      - name: Sačuvaj stanje
+      - name: Šifruj i sačuvaj stanje
         # samo ako je stanje uspešno preuzeto, da prazna baza nikad ne zameni pravu
         if: always() && inputs.mode != 'proba' && steps.stanje.outcome == 'success'
         run: |
-          python -m cloud.state pack "$RUNNER_TEMP/novo-stanje.tar.gz"
-          mv "$RUNNER_TEMP/novo-stanje.tar.gz" "$RUNNER_TEMP/stanje.tar.gz"
-          gh release upload stanje "$RUNNER_TEMP/stanje.tar.gz" --clobber
+          python -m cloud.state pack "$RUNNER_TEMP/stanje.tar.gz"
+          node cloud/crypt.mjs enc "$RUNNER_TEMP/stanje.tar.gz" "$RUNNER_TEMP/stanje.enc"
+          rm "$RUNNER_TEMP/stanje.tar.gz"
+          gh release upload stanje "$RUNNER_TEMP/stanje.enc" --clobber
 
       - name: Šifruj stranicu za telefon
+        id: stranica
         if: inputs.mode != 'proba' && hashFiles('reports/output/page.html') != ''
-        env:
-          PAGE_PASSWORD: ${{ secrets.PAGE_PASSWORD }}
         run: |
-          test -n "$PAGE_PASSWORD" || { echo "Nema tajne PAGE_PASSWORD"; exit 1; }
           mkdir -p site/thumbs
           cp reports/output/thumbs/*.webp site/thumbs/ || true
           node cloud/encrypt_page.mjs reports/output/page.html site/index.html
@@ -85,12 +86,11 @@ jobs:
           printf 'User-agent: *\nDisallow: /\n' > site/robots.txt
 
       - name: Objavi stranicu
-        if: inputs.mode != 'proba' && hashFiles('site/index.html') != ''
+        if: steps.stranica.outcome == 'success'
         uses: peaceiris/actions-gh-pages@v4
         with:
-          personal_token: ${{ secrets.PAGES_TOKEN }}
-          external_repository: ${{ github.repository_owner }}/patike
+          github_token: ${{ github.token }}
           publish_branch: gh-pages
           publish_dir: ./site
-          force_orphan: true   # bez istorije, da javni repozitorijum ne raste svaki dan
+          force_orphan: true   # bez istorije, da repozitorijum ne raste svaki dan
           commit_message: "Dashboard"

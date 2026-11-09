@@ -650,3 +650,23 @@ def test_cloud_state_roundtrip(tmp_path, monkeypatch):
     assert (restored / "thumbs" / "a.webp").read_bytes() == b"x" and not (restored / "app.log").exists()
     with sqlite3.connect(restored / "shoes.db") as c:
         assert c.execute("SELECT x FROM t").fetchone() == (7,)
+
+
+def test_state_encryption_roundtrip_and_wrong_password(tmp_path):
+    import os, shutil, subprocess
+    from pathlib import Path
+    node = shutil.which("node")
+    if not node:
+        import pytest
+        pytest.skip("nema Node-a")
+    script = str(Path(__file__).resolve().parent.parent / "cloud" / "crypt.mjs")
+    src = tmp_path / "s.tar.gz"
+    src.write_bytes(os.urandom(5000) + b"shoes.db")
+    env = {**os.environ, "PAGE_PASSWORD": "dovoljno-duga-lozinka"}
+    subprocess.run([node, script, "enc", str(src), str(tmp_path / "s.enc")], env=env, check=True)
+    assert b"shoes.db" not in (tmp_path / "s.enc").read_bytes()
+    subprocess.run([node, script, "dec", str(tmp_path / "s.enc"), str(tmp_path / "back")], env=env, check=True)
+    assert (tmp_path / "back").read_bytes() == src.read_bytes()
+    env["PAGE_PASSWORD"] = "neka-druga-lozinka"
+    bad = subprocess.run([node, script, "dec", str(tmp_path / "s.enc"), str(tmp_path / "x")], env=env)
+    assert bad.returncode == 4 and not (tmp_path / "x").exists()
