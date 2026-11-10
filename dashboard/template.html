@@ -69,6 +69,14 @@ table .thumb { width:44px; height:44px; }
 .score { font-size:17px; font-weight:600; font-variant-numeric:tabular-nums; }
 .cls { font-size:11px; font-weight:600; letter-spacing:.02em; }
 .cls.top { color:var(--good); } .cls.over { color:var(--bad); } .cls.none { color:var(--muted); }
+.cls.top,.cls.fill { display:inline-block; padding:1px 6px; border-radius:4px; border:1px solid var(--good); }
+.cls.fill { background:var(--good); color:var(--surface); }
+.only-phone { display:none; }
+.more { display:contents; }
+.mine[aria-pressed=true] { background:var(--ink); color:var(--page); border-color:var(--ink); }
+.stale { margin-top:6px; padding:6px 10px; border:1px solid var(--bad); border-radius:6px; color:var(--bad); font-weight:600; }
+.running { margin-top:6px; color:var(--good); font-weight:600; }
+.scanbtn { display:inline-block; margin-top:8px; padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--ink); text-decoration:none; font-weight:600; }
 .flag { color:var(--warn); }
 .change { margin-top:3px; font-size:12px; font-weight:600; }
 .change.new_low,.change.down { color:var(--good); } .change.up { color:var(--bad); }
@@ -104,12 +112,22 @@ td.num { font-variant-numeric:tabular-nums; text-align:right; }
 .empty { padding:24px; color:var(--ink2); background:var(--surface); border:1px dashed var(--border); border-radius:8px; }
 @media (max-width:760px) {
   header { padding:16px 16px 8px; } main { padding:0 16px 40px; }
-  .filters { position:static; }
-  .offer summary { grid-template-columns:1fr 1fr; }
-  .offer summary > :first-child { grid-column:1 / -1; }
-  .cols { display:flex; flex-wrap:wrap; gap:4px 14px; position:static; }
+  .filters { position:static; align-items:flex-end; }
+  .only-phone { display:inline-block; }
+  .filters:not(.open) .more { display:none; }
+  .filters.open .more { display:flex; flex-wrap:wrap; gap:8px; width:100%; align-items:flex-end; }
+  .filters > label:first-child { flex:1 1 100%; }
+  nav.tabs { flex-wrap:nowrap; overflow-x:auto; margin:10px -16px; padding:0 16px 4px; scrollbar-width:none; }
+  nav.tabs button { flex:none; white-space:nowrap; }
+  .note:not(.notice), .xmeta, .cols { display:none !important; }
+  /* Zatvorena kartica je kratka: slika, ime, cena, popust, skor i brojevi. Ostalo se vidi kad se otvori. */
+  .offer summary { grid-template-columns:1.3fr .7fr 1fr; gap:6px 10px; padding:10px 12px; }
+  .offer summary > :first-child, .offer summary > .sz, .offer summary > .stores { grid-column:1 / -1; }
+  .offer summary > .sz { order:2; } .offer summary > .stores { order:3; }
+  .offer:not([open]) .xtra { display:none; }
+  .thumb { width:60px; height:60px; }
   .lbl { display:block; }
-  .detail { grid-template-columns:1fr; }
+  .detail { grid-template-columns:minmax(0,1fr); } .detail > div { min-width:0; overflow-wrap:anywhere; }
   input[type=search] { width:100%; }
 }
 </style>
@@ -150,6 +168,17 @@ const fullName = o => { const tags=[...o.qualifiers,...(o.gender==="unisex"?["un
 const safeUrl = u => /^https?:\/\//.test(u||"") ? u : null;
 
 const state = {tab:"top", q:"", gender:DATA.profile.gender, brand:"", sizes:new Set(), retailer:"", category:"", maxPrice:"", confidence:DATA.profile.minimum_deal_confidence, sort:"", dir:1, minDiscount:""};
+// Izbor (kartica, pol, brojevi) se pamti u ovom pregledaču, da stranica sledeći put ne kreće od nule.
+const PREFS="patike-izbor";
+try{
+  const saved=JSON.parse(localStorage.getItem(PREFS)||"null");
+  if(saved){
+    if(["men","women"].includes(saved.gender)) state.gender=saved.gender;
+    if(typeof saved.tab==="string") state.tab=saved.tab;
+    if(Array.isArray(saved.sizes)) state.sizes=new Set(saved.sizes.map(String));
+  }
+}catch(e){}
+function savePrefs(){ try{ localStorage.setItem(PREFS,JSON.stringify({tab:state.tab,gender:state.gender,sizes:[...state.sizes]})); }catch(e){} }
 const TABS = [
   ["top","Top 20"],["models","Svi modeli"],["cheap","Najjeftinije"],["long","Duge staze"],["daily","Svakodnevne"],["speed","Tempo i trka"],
   ["changes","Promene cena"],["compare","Poređenje prodavnica"],["all","Sve ponude"],["alerts","Alarmi"],["review","Ručna provera"],["notrunning","Nije za trčanje"],["stores","Prodavnice"],
@@ -360,7 +389,7 @@ function changeBadge(o){
     el("span",{class:"small",text:`bila ${rsd(c.from)} (${pct(c.pct)}), ${when(c.at)}`}));
 }
 function offerCard(o) {
-  const clsName = ["EXCEPTIONAL","VERY GOOD","GOOD"].includes(o.classification)?"top":o.classification==="OVERPRICED"?"over":o.classification==="INSUFFICIENT DATA"?"none":"";
+  const clsName = ["EXCEPTIONAL","VERY GOOD"].includes(o.classification)?"fill":o.classification==="GOOD"?"top":o.classification==="OVERPRICED"?"over":o.classification==="INSUFFICIENT DATA"?"none":"";
   const hist = o.history.advantage!==null?`Istorija: ${pct(o.history.advantage)}`:`Istorija: nema dovoljno podataka (${o.history.observations} opažanja)`;
   const summary = el("summary",{},
     el("div",{class:"who"},
@@ -368,36 +397,36 @@ function offerCard(o) {
       el("div",{},
         el("div",{class:"name",text:fullName(o)}),
         el("div",{class:"small",text:o.categories.map(c=>CATS[c]||c).join(", ")||"kategorija nije navedena"}),
-        el("div",{class:"small",text:o.title}),
-        el("div",{class:"small",text:`Provereno: ${when(o.observed_at)}`}))),
+        el("div",{class:"small xtra",text:o.title}),
+        el("div",{class:"small xtra",text:`Provereno: ${when(o.observed_at)}`}))),
     el("div",{},
       el("div",{class:"lbl",text:"Cena"}),
       el("div",{class:"price",text:rsd(priceOf(o))}),
       o.old_price?el("div",{class:"old",text:rsd(o.old_price)}):null,
       changeBadge(o),
       el("div",{class:"small",text:o.retailer_name+(o.seller?" / "+o.seller:"")}),
-      o.sku?el("div",{class:"small",text:"SKU "+o.sku}):null,
-      o.other_offers?el("div",{class:"small",text:`još ${o.other_offers} ponuda ovog modela (u detaljima)`}):null),
+      o.sku?el("div",{class:"small xtra",text:"SKU "+o.sku}):null,
+      o.other_offers?el("div",{class:"small xtra",text:`još ${o.other_offers} ponuda ovog modela (u detaljima)`}):null),
     el("div",{title:o.claimed_discount!==null?"Popust prodavca: "+CLAIM[o.claim_status]:"Prodavac ne navodi popust"},
       el("div",{class:"lbl",text:"Popust"}),
       el("div",{class:"big",text:discountText(o)})),
-    el("div",{},
+    el("div",{class:"xtra"},
       el("div",{class:"lbl",text:"Tržište"}),
       el("div",{class:"big",text:o.market_advantage===null?"-":pct(o.market_advantage)}),
       el("div",{class:"small",text:o.market_advantage===null?"nema poređenja":`medijana ${rsd(o.market_median)}, ${o.market_retailers} drugih`}),
       el("div",{class:"small",text:hist})),
-    el("div",{title:MSRP_HELP},
+    el("div",{class:"xtra",title:MSRP_HELP},
       el("div",{class:"lbl",text:"Cena u SAD"}),
       el("div",{class:"big",text:vsMsrp(o)===null?"-":pctWhole(vsMsrp(o))}),
       el("div",{class:"small",text:msrpLine(o)}),
       o.old_price&&o.msrp_rsd?el("div",{class:"small",text:"precrtana "+pctWhole(o.old_price/o.msrp_rsd-1)}):null),
-    el("div",{title:EU_HELP},
+    el("div",{class:"xtra",title:EU_HELP},
       el("div",{class:"lbl",text:"Cena u EU"}),
       euCell(o)),
-    el("div",{class:"small"},
+    el("div",{class:"small sz"},
       el("div",{class:"lbl",text:"Veličine"}),
       sizeNodes(o)),
-    el("div",{title:o.review_source||"",},
+    el("div",{class:"xtra",title:o.review_source||"",},
       el("div",{class:"lbl",text:"Ocena"}),
       el("div",{class:"big",text:o.review_score!==null?o.review_score:"-"}),
       el("div",{class:"small",text:o.review_score!==null?"/100":"nema"})),
@@ -405,8 +434,9 @@ function offerCard(o) {
       el("div",{class:"lbl",text:"Skor"}),
       el("div",{class:"score",text:o.score===null?"-":o.score}),
       el("div",{class:"cls "+clsName,text:o.classification}),
-      el("div",{class:"small",text:"Pouzdanost: "+o.confidence})),
+      el("div",{class:"small xtra",text:"Pouzdanost: "+o.confidence})),
     storeLinks(o.group));
+  summary.lastElementChild.classList.add("xtra");
   const d = el("details",{class:"offer"},summary);
   d.addEventListener("toggle",()=>{ if(d.open && !d.dataset.built){ d.dataset.built="1"; d.append(offerDetail(o)); }},{once:false});
   return d;
@@ -688,6 +718,8 @@ function simpleList(items,render,emptyText,note){
   return [note?el("p",{class:"note",text:note}):null, items.length?el("div",{class:"tablewrap"},el("table",{},el("tbody",{},items.slice(0,500).map(render)))):el("div",{class:"empty",text:emptyText})];
 }
 function render(){
+  savePrefs();
+  document.querySelectorAll(".mine").forEach(b=>b.setAttribute("aria-pressed",String(mineOn())));
   document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===state.tab));
   const box=document.getElementById("content"); box.replaceChildren();
   let nodes;
@@ -710,12 +742,14 @@ function exportCsv(){
 }
 function exportJson(){download("ponude.json","application/json",JSON.stringify(viewOffers(),null,1));}
 function sizePicker(sizes){
-  const shown=el("span",{text:"Sve"});
-  const update=()=>{ shown.textContent=[...state.sizes].sort(bySize).join(", ")||"Sve"; render(); };
-  const boxes=sizes.map(v=>el("input",{type:"checkbox",value:v,onchange:e=>{
+  for(const v of [...state.sizes]) if(!sizes.includes(v)) state.sizes.delete(v);  // zapamćen broj koga više nema
+  const label=()=>[...state.sizes].sort(bySize).join(", ")||"Sve";
+  const shown=el("span",{text:label()});
+  const update=()=>{ shown.textContent=label(); render(); };
+  const boxes=sizes.map(v=>{ const b=el("input",{type:"checkbox",value:v,onchange:e=>{
     if(e.target.checked) state.sizes.add(v); else state.sizes.delete(v);
     update();
-  }}));
+  }}); b.checked=state.sizes.has(v); return b; });
   const clear=el("button",{type:"button",text:"Očisti izbor",onclick:()=>{
     state.sizes.clear(); boxes.forEach(b=>{b.checked=false;}); update();
   }});
@@ -725,6 +759,9 @@ function sizePicker(sizes){
   document.addEventListener("click",e=>{ if(box.open&&!box.contains(e.target)) box.open=false; });
   return el("div",{class:"field"},"Veličine",box);
 }
+// "Moj broj": brojevi iz config.yaml (preferred_eu_sizes, u podacima profile.sizes), za pol iz profila.
+const MY_SIZES=(DATA.profile.sizes||[]).map(String);
+const mineOn=()=>MY_SIZES.length>0&&state.sizes.size>0&&[...state.sizes].every(v=>MY_SIZES.includes(v));
 function buildFilters(){
   const offers=DATA.offers;
   const uniq=f=>[...new Set(offers.map(f).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),"sr",{numeric:true}));
@@ -735,15 +772,27 @@ function buildFilters(){
   let picker=genderSizes();
   const genderSelect=el("select",{onchange:e=>{
     state.gender=e.target.value; state.sizes.clear();
-    const next=genderSizes(); picker.replaceWith(next); picker=next; render();
+    resetPicker(); render();
   }},[["men","Muško"],["women","Žensko"]].map(([v,t])=>el("option",{value:v,text:t})));
   genderSelect.value=state.gender;
+  const resetPicker=()=>{ const next=genderSizes(); picker.replaceWith(next); picker=next; };
+  const mine=MY_SIZES.length?el("button",{class:"mine",type:"button","aria-pressed":"false",text:"Moj broj",
+    title:"Samo ponude koje imaju "+MY_SIZES.join(", ")+" na stanju",onclick:()=>{
+      if(mineOn()) state.sizes.clear();
+      else { if(state.gender!==DATA.profile.gender){ state.gender=DATA.profile.gender; genderSelect.value=state.gender; } state.sizes=new Set(MY_SIZES); }
+      resetPicker(); render();
+    }}):null;
+  const box=document.getElementById("filters");
+  const toggle=el("button",{class:"only-phone",type:"button","aria-expanded":"false",text:"Filteri",onclick:()=>{
+    toggle.setAttribute("aria-expanded",String(box.classList.toggle("open"))); fitHeader();
+  }});
   const retailerNames=Object.fromEntries(DATA.retailers.map(r=>[r.retailer,r.name]));
   document.getElementById("filters").append(
     el("label",{},"Model",el("input",{type:"search",placeholder:"npr. Novablast",oninput:e=>{state.q=e.target.value;render();}})),
+    ...[picker, mine, toggle].filter(Boolean),
+    el("div",{class:"more"},
     el("label",{},"Pol",genderSelect),
     select("Brend","brand",uniq(o=>o.brand)),
-    picker,
     select("Prodavnica","retailer",uniq(o=>o.retailer),v=>retailerNames[v]||v),
     select("Kategorija","category",Object.keys(CATS),v=>CATS[v]),
     el("label",{},"Maks. cena",el("input",{type:"number",min:0,step:500,oninput:e=>{state.maxPrice=e.target.value;render();}})),
@@ -751,18 +800,35 @@ function buildFilters(){
     select("Min. pouzdanost","confidence",["low","medium","high"]),
     // Artifakt ne dozvoljava preuzimanje fajlova, pa tamo nema izvoza.
     ...(window.DEAL_STATIC?[]:[el("button",{onclick:exportCsv,text:"Izvezi CSV"}),
-    el("button",{onclick:exportJson,text:"Izvezi JSON"})]));
+    el("button",{onclick:exportJson,text:"Izvezi JSON"})])));
   document.getElementById("tabs").append(...TABS.map(([k,t])=>el("button",{"data-tab":k,role:"tab",onclick:()=>{state.tab=k;state.notice=null;render();},text:t})));
 }
 const p=DATA.profile;
-document.getElementById("meta").textContent=`Poslednji sken: ${when(DATA.generated_at)} | Modela u prodavnicama: ${DATA.counts.models_seen} | Sa ocenama u katalogu: ${DATA.counts.catalog_models} | Opažanja cena: ${DATA.counts.observations}`;
-if(DATA.fx) document.getElementById("meta").append(" | ",el("a",{href:"https://www.exchangerate-api.com",target:"_blank",rel:"noopener",text:"Rates By Exchange Rate API"}),`: 1 USD = ${DATA.fx.rate.toFixed(2)} RSD`+(DATA.fx.eur_rate?`, 1 EUR = ${DATA.fx.eur_rate.toFixed(2)} RSD`:""));
-if((DATA.foreign_sources||[]).length) document.getElementById("meta").append(" | Cene u EU: "+DATA.foreign_sources.map(s=>`${s.name} (${s.prices}, ${when(s.checked_at)})`).join(", "));
+const meta=document.getElementById("meta"), xmeta=el("span",{class:"xmeta"});
+meta.append(`Poslednji sken: ${when(DATA.generated_at)}`,xmeta);
+xmeta.append(` | Modela u prodavnicama: ${DATA.counts.models_seen} | Sa ocenama u katalogu: ${DATA.counts.catalog_models} | Opažanja cena: ${DATA.counts.observations}`);
+if(DATA.fx) xmeta.append(" | ",el("a",{href:"https://www.exchangerate-api.com",target:"_blank",rel:"noopener",text:"Rates By Exchange Rate API"}),`: 1 USD = ${DATA.fx.rate.toFixed(2)} RSD`+(DATA.fx.eur_rate?`, 1 EUR = ${DATA.fx.eur_rate.toFixed(2)} RSD`:""));
+if((DATA.foreign_sources||[]).length) xmeta.append(" | Cene u EU: "+DATA.foreign_sources.map(s=>`${s.name} (${s.prices}, ${when(s.checked_at)})`).join(", "));
+// Sken ide jednom dnevno; stariji podaci znače da jutarnji sken nije uspeo.
+const STALE_HOURS=30, ageHours=(Date.now()-new Date(DATA.generated_at+"Z"))/36e5;
+if(ageHours>STALE_HOURS) meta.after(el("div",{class:"stale",role:"alert",text:`Podaci su stari ${Math.max(1,Math.floor(ageHours/24))} dan(a). Jutarnji sken verovatno nije uspeo.`}));
+// Na GitHub stranici: dugme vodi na ručno pokretanje skena (Run workflow), a javni API kaže da li sken već radi.
+const pagesHost=location.hostname.endsWith(".github.io");
+const REPO=pagesHost?`${location.hostname.split(".")[0]}/${location.pathname.split("/")[1]}`:null;
+if(REPO){
+  const btn=el("a",{class:"scanbtn",href:`https://github.com/${REPO}/actions/workflows/dnevni-sken.yml`,target:"_blank",rel:"noopener",
+    title:"Otvara GitHub; tamo klikni Run workflow. Sken traje oko 45 minuta, a ručni je dozvoljen jednom u 3 sata.",text:"Pokreni sken"});
+  document.querySelector("header").append(btn);
+  fetch(`https://api.github.com/repos/${REPO}/actions/workflows/dnevni-sken.yml/runs?per_page=3`).then(r=>r.ok?r.json():null).then(j=>{
+    const run=((j&&j.workflow_runs)||[]).find(r=>["in_progress","queued"].includes(r.status));
+    if(run) btn.before(el("div",{class:"running",role:"status",text:`Sken je u toku od ${new Date(run.run_started_at||run.created_at).toLocaleTimeString("sr-RS",{timeStyle:"short"})}. Nove cene stižu za oko 45 minuta, pa osveži stranicu.`}));
+  }).catch(()=>{});
+}
 buildFilters(); render();
 // Izveštaj nosi oznake iz trenutka pravljenja; server ima najnovije. Otvoren kao fajl, dashboard koristi one iz izveštaja.
 fetch("api/not-running").then(r=>r.ok?r.json():null).then(marks=>{ if(marks){ syncNotRunning(marks); render(); } }).catch(()=>{});
 // Zaglavlje kolona ostaje odmah ispod filtera i kada se filteri prelome u više redova.
-const fitHeader=()=>document.documentElement.style.setProperty("--filters-h",document.getElementById("filters").offsetHeight+"px");
+function fitHeader(){ document.documentElement.style.setProperty("--filters-h",document.getElementById("filters").offsetHeight+"px"); }
 fitHeader(); addEventListener("resize",fitHeader);
 </script>
 </body>

@@ -5,6 +5,7 @@ u privatnom repozitorijumu: preuzme se pre skena, a posle skena se vrati nazad.
 
     python -m cloud.state pack  stanje.tar.gz
     python -m cloud.state unpack stanje.tar.gz
+    python -m cloud.state count              (broj opažanja cena u bazi; 0 ako baze nema)
 """
 from __future__ import annotations
 
@@ -36,7 +37,18 @@ def unpack(source: Path) -> None:
         tar.extractall(DATA, filter="data")  # "data" filter odbija apsolutne putanje i ../
 
 
+def count() -> int:
+    db = DATA / "shoes.db"
+    if not db.exists():
+        return 0
+    with sqlite3.connect(db) as conn:
+        return conn.execute("SELECT count(*) FROM price_observations").fetchone()[0]
+
+
 if __name__ == "__main__":
+    if sys.argv[1:] == ["count"]:
+        print(count())
+        sys.exit(0)
     if len(sys.argv) != 3 or sys.argv[1] not in ("pack", "unpack"):
         sys.exit(__doc__)
     (pack if sys.argv[1] == "pack" else unpack)(Path(sys.argv[2]))

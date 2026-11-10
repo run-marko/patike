@@ -1,13 +1,14 @@
 # Dnevni sken cena na GitHubu, nezavisno od Markovog računara.
 # Repozitorijum je javan (bez ograničenja minuta), pa se ništa osetljivo ne čuva otvoreno:
-#  - stanje (baza, keš, kurs, oznake, sličice) je stanje.enc u izdanju "stanje", šifrovano lozinkom
+#  - stanje (baza, keš, kurs, oznake, sličice) je stanje.enc u izdanju "stanje", šifrovano lozinkom;
+#    uz njega se čuva 7 dnevnih kopija stanje-GGGG-MM-DD.enc
 #  - stranica za telefon se šifruje istom lozinkom i objavljuje na grani gh-pages (GitHub Pages)
 # Jedina tajna: PAGE_PASSWORD (upisuje je Marko skriptom cloud/postavi-lozinku.ps1).
 name: Dnevni sken
 
 on:
   schedule:
-    - cron: "0 5 * * *"   # 06:00 zimi i 07:00 leti po beogradskom vremenu; GitHub ume da kasni do pola sata
+    - cron: "0 5 * * *"   # 06:00 zimi i 07:00 leti po beogradskom vremenu; GitHub ume da kasni i do sat vremena
   workflow_dispatch:
     inputs:
       mode:
@@ -23,13 +24,43 @@ concurrency:
   group: dnevni-sken
   cancel-in-progress: false
 
+env:
+  GH_TOKEN: ${{ github.token }}
+  GH_REPO: ${{ github.repository }}
+  MANUAL_GAP_HOURS: "3"
+  BACKUPS: "7"
+
 jobs:
+  # Ručni sken je dozvoljen jednom u 3 sata, da prodavnice ne dobijaju nepotrebne zahteve.
+  provera:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      skip: ${{ steps.gap.outputs.skip }}
+    steps:
+      - name: Razmak od poslednjeg skena
+        id: gap
+        run: |
+          skip=false
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.mode }}" != "proba" ]; then
+            last=$(gh release view stanje --json assets --jq '[.assets[]|select(.name=="stanje.enc")][0].updatedAt' || true)
+            if [ -n "$last" ] && [ "$last" != "null" ]; then
+              age=$(( $(date +%s) - $(date -d "$last" +%s) ))
+              if [ "$age" -lt $(( MANUAL_GAP_HOURS * 3600 )) ]; then
+                skip=true
+                echo "::warning::Poslednji sken je završen pre $(( age / 60 )) min. Ručni sken je dozvoljen jednom u ${MANUAL_GAP_HOURS} sata, pa je ovaj preskočen."
+              fi
+            fi
+          fi
+          echo "skip=$skip" >> "$GITHUB_OUTPUT"
+
   sken:
+    needs: provera
+    if: needs.provera.outputs.skip != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 150
     env:
       TZ: Europe/Belgrade
-      GH_TOKEN: ${{ github.token }}
       PAGE_PASSWORD: ${{ secrets.PAGE_PASSWORD }}
       PYTHONUNBUFFERED: "1"
     steps:
@@ -50,7 +81,8 @@ jobs:
           gh release download stanje --pattern stanje.enc --dir "$RUNNER_TEMP"
           node cloud/crypt.mjs dec "$RUNNER_TEMP/stanje.enc" "$RUNNER_TEMP/stanje.tar.gz"
           python -m cloud.state unpack "$RUNNER_TEMP/stanje.tar.gz"
-          rm "$RUNNER_TEMP/stanje.tar.gz"
+          rm "$RUNNER_TEMP/stanje.tar.gz" "$RUNNER_TEMP/stanje.enc"
+          echo "before=$(python -m cloud.state count)" >> "$GITHUB_OUTPUT"
 
       - name: Proba prodavnica
         if: inputs.mode == 'proba'
@@ -70,10 +102,22 @@ jobs:
         # samo ako je stanje uspešno preuzeto, da prazna baza nikad ne zameni pravu
         if: always() && inputs.mode != 'proba' && steps.stanje.outcome == 'success'
         run: |
+          before="${{ steps.stanje.outputs.before }}"
+          after=$(python -m cloud.state count)
+          echo "Opažanja cena: pre $before, posle $after"
+          # istorija se samo dopisuje; manje opažanja nego pre znači pokvarenu bazu, pa se stara ne dira
+          if [ "$after" -lt "$before" ]; then echo "::error::Baza ima manje opažanja nego pre skena; stanje nije sačuvano."; exit 1; fi
           python -m cloud.state pack "$RUNNER_TEMP/stanje.tar.gz"
           node cloud/crypt.mjs enc "$RUNNER_TEMP/stanje.tar.gz" "$RUNNER_TEMP/stanje.enc"
           rm "$RUNNER_TEMP/stanje.tar.gz"
+          # prvo dnevna kopija, pa glavni fajl
+          day="$RUNNER_TEMP/stanje-$(date +%F).enc"
+          cp "$RUNNER_TEMP/stanje.enc" "$day"
+          gh release upload stanje "$day" --clobber
           gh release upload stanje "$RUNNER_TEMP/stanje.enc" --clobber
+          gh release view stanje --json assets --jq '.assets[].name' | grep -E '^stanje-[0-9]{4}-[0-9]{2}-[0-9]{2}\.enc$' | sort | head -n -"$BACKUPS" | while read -r old; do
+            echo "Brišem staru kopiju $old"; gh release delete-asset stanje "$old" -y
+          done
 
       - name: Šifruj stranicu za telefon
         id: stranica

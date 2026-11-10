@@ -63,10 +63,22 @@ class _QuietHandler(http.server.SimpleHTTPRequestHandler):
         else:
             super().do_GET()
 
+    def _drain(self) -> None:
+        """Čita telo odbijenog zahteva (najviše MAX_BODY), da klijent dobije odgovor umesto prekinute veze."""
+        try:
+            length = min(int(self.headers.get("Content-Length") or 0), MAX_BODY)
+            if length > 0:
+                self.rfile.read(length)
+        except (ValueError, OSError):
+            pass
+        self.close_connection = True
+
     def do_POST(self):
         if self.path != NOT_RUNNING_PATH:
+            self._drain()
             self._json(404, {"error": "nepoznata putanja"})
         elif not self._from_dashboard():
+            self._drain()
             self._json(403, {"error": "zahtev nije sa lokalnog dashboarda"})
         else:
             body = self._read_body()
