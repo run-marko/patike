@@ -12,9 +12,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "sken = pun sken i objava; proba = samo proveri koje prodavnice odgovaraju sa GitHuba"
+        description: "sken = pun sken i objava; stranica = samo ponovo objavi stranicu (novi izgled, bez skena, oko 2 min); proba = samo proveri prodavnice"
         type: choice
-        options: [sken, proba]
+        options: [sken, stranica, proba]
         default: sken
 
 permissions:
@@ -42,7 +42,7 @@ jobs:
         id: gap
         run: |
           skip=false
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.mode }}" != "proba" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.mode }}" = "sken" ]; then
             last=$(gh release view stanje --json assets --jq '[.assets[]|select(.name=="stanje.enc")][0].updatedAt' || true)
             if [ -n "$last" ] && [ "$last" != "null" ]; then
               age=$(( $(date +%s) - $(date -d "$last" +%s) ))
@@ -88,8 +88,12 @@ jobs:
         if: inputs.mode == 'proba'
         run: python main.py doctor || true
 
+      - name: Samo izveštaj (bez skena)
+        if: inputs.mode == 'stranica'
+        run: python main.py report
+
       - name: Sken, cene u inostranstvu, izveštaj i sličice
-        if: inputs.mode != 'proba'
+        if: inputs.mode != 'proba' && inputs.mode != 'stranica'
         run: |
           set +e
           python main.py scan --top 20; scan=$?
@@ -100,7 +104,7 @@ jobs:
 
       - name: Šifruj i sačuvaj stanje
         # samo ako je stanje uspešno preuzeto, da prazna baza nikad ne zameni pravu
-        if: always() && inputs.mode != 'proba' && steps.stanje.outcome == 'success'
+        if: always() && inputs.mode != 'proba' && inputs.mode != 'stranica' && steps.stanje.outcome == 'success'
         run: |
           before="${{ steps.stanje.outputs.before }}"
           after=$(python -m cloud.state count)
