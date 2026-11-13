@@ -862,6 +862,8 @@ if(REPO){
     finally{ btn.disabled=false; }
   }
   btn.addEventListener("click",start);
+  // Link sa #sken (dugme iz Claude artifakta) odmah pokreće sken; oznaka se briše da osvežavanje ne pokrene novi.
+  if(location.hash==="#sken"){ history.replaceState(null,"",location.pathname+location.search); setTimeout(start,0); }
   header.append(btn,status,form);
   latestRun().then(run=>run&&showRunning(run));
 }
