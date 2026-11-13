@@ -75,8 +75,10 @@ table .thumb { width:44px; height:44px; }
 .more { display:contents; }
 .mine[aria-pressed=true] { background:var(--ink); color:var(--page); border-color:var(--ink); }
 .stale { margin-top:6px; padding:6px 10px; border:1px solid var(--bad); border-radius:6px; color:var(--bad); font-weight:600; }
+.tokenform { margin-top:8px; padding:10px; border:1px solid var(--border); border-radius:6px; max-width:420px; }
+.scanbtn:disabled { opacity:.6; }
 .running { margin-top:6px; color:var(--good); font-weight:600; }
-.scanbtn { display:inline-block; margin-top:8px; padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--ink); text-decoration:none; font-weight:600; }
+.scanbtn { cursor:pointer; font:inherit; display:inline-block; margin-top:8px; padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--ink); text-decoration:none; font-weight:600; }
 .flag { color:var(--warn); }
 .change { margin-top:3px; font-size:12px; font-weight:600; }
 .change.new_low,.change.down { color:var(--good); } .change.up { color:var(--bad); }
@@ -812,17 +814,56 @@ if((DATA.foreign_sources||[]).length) xmeta.append(" | Cene u EU: "+DATA.foreign
 // Sken ide jednom dnevno; stariji podaci znače da jutarnji sken nije uspeo.
 const STALE_HOURS=30, ageHours=(Date.now()-new Date(DATA.generated_at+"Z"))/36e5;
 if(ageHours>STALE_HOURS) meta.after(el("div",{class:"stale",role:"alert",text:`Podaci su stari ${Math.max(1,Math.floor(ageHours/24))} dan(a). Jutarnji sken verovatno nije uspeo.`}));
-// Na GitHub stranici: dugme vodi na ručno pokretanje skena (Run workflow), a javni API kaže da li sken već radi.
+// Na GitHub stranici: dugme direktno pokreće sken (workflow_dispatch) ključem koji je sačuvan samo na ovom uređaju.
+// Ključ je fine-grained token samo za ovaj repozitorijum, sa jedinom dozvolom Actions: Read and write.
 const pagesHost=location.hostname.endsWith(".github.io");
 const REPO=pagesHost?`${location.hostname.split(".")[0]}/${location.pathname.split("/")[1]}`:null;
 if(REPO){
-  const btn=el("a",{class:"scanbtn",href:`https://github.com/${REPO}/actions/workflows/dnevni-sken.yml`,target:"_blank",rel:"noopener",
-    title:"Otvara GitHub; tamo klikni Run workflow. Sken traje oko 45 minuta, a ručni je dozvoljen jednom u 3 sata.",text:"Pokreni sken"});
-  document.querySelector("header").append(btn);
-  fetch(`https://api.github.com/repos/${REPO}/actions/workflows/dnevni-sken.yml/runs?per_page=3`).then(r=>r.ok?r.json():null).then(j=>{
-    const run=((j&&j.workflow_runs)||[]).find(r=>["in_progress","queued"].includes(r.status));
-    if(run) btn.before(el("div",{class:"running",role:"status",text:`Sken je u toku od ${new Date(run.run_started_at||run.created_at).toLocaleTimeString("sr-RS",{timeStyle:"short"})}. Nove cene stižu za oko 45 minuta, pa osveži stranicu.`}));
-  }).catch(()=>{});
+  const API=`https://api.github.com/repos/${REPO}`, WF=`${API}/actions/workflows/dnevni-sken.yml`, TOKEN_KEY="gh-scan-token", GAP_HOURS=3;
+  const getToken=()=>{ try{ return localStorage.getItem(TOKEN_KEY); }catch(e){ return null; } };
+  const setToken=t=>{ try{ t?localStorage.setItem(TOKEN_KEY,t):localStorage.removeItem(TOKEN_KEY); }catch(e){} };
+  const header=document.querySelector("header");
+  const status=el("div",{class:"running",role:"status"});
+  const btn=el("button",{class:"scanbtn",type:"button",title:"Pokreće sken na GitHubu. Traje oko 45 minuta, a ručni je dozvoljen jednom u 3 sata.",text:"Pokreni sken"});
+  const say=(t,bad)=>{ status.textContent=t; status.style.color=bad?"var(--bad)":""; };
+  const latestRun=()=>fetch(`${WF}/runs?per_page=3`,{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>((j&&j.workflow_runs)||[]).find(r=>["in_progress","queued","waiting","requested","pending"].includes(r.status))).catch(()=>null);
+  const showRunning=run=>say(`Sken je u toku od ${new Date(run.run_started_at||run.created_at).toLocaleTimeString("sr-RS",{timeStyle:"short"})}. Nove cene stižu za oko 45 minuta, pa osveži stranicu.`);
+  // Forma za ključ: prikazuje se samo prvi put ili kad ključ prestane da važi.
+  const tokenUrl="https://github.com/settings/personal-access-tokens/new?name=Dashboard%20patike&description=Dugme%20Pokreni%20sken&expires_in=none&actions=write";
+  const form=el("div",{class:"tokenform",hidden:true});
+  const input=el("input",{type:"password",placeholder:"github_pat_...",autocomplete:"off",style:"width:100%;margin:6px 0"});
+  form.append(
+    el("div",{},"Treba mi jednom tvoj GitHub ključ da bi dugme moglo samo da pokrene sken. Čuva se samo na ovom uređaju."),
+    el("ol",{style:"margin:6px 0;padding-left:20px"},
+      el("li",{},el("a",{href:tokenUrl,target:"_blank",rel:"noopener",text:"Otvori pravljenje ključa"})),
+      el("li",{},`Repository access: Only select repositories → ${REPO.split("/")[1]}`),
+      el("li",{},"Permissions: Actions → Read and write (već izabrano)"),
+      el("li",{},"Generate token, kopiraj ga i nalepi ovde")),
+    input,
+    el("button",{type:"button",class:"scanbtn",text:"Sačuvaj i pokreni",onclick:()=>{ const t=input.value.trim(); if(!/^(github_pat_|ghp_)/.test(t)){ say("To ne liči na GitHub ključ (počinje sa github_pat_).",true); return; } setToken(t); input.value=""; form.hidden=true; start(); }}),
+    el("button",{type:"button",class:"scanbtn",style:"margin-left:6px",text:"Otkaži",onclick:()=>{ form.hidden=true; say(""); }}));
+  async function start(){
+    const token=getToken();
+    if(!token){ form.hidden=false; input.focus(); return; }
+    btn.disabled=true; say("Proveravam...");
+    try{
+      const run=await latestRun();
+      if(run){ showRunning(run); return; }
+      // Isto pravilo kao u workflow-u: ručni sken najviše jednom u 3 sata.
+      const rel=await fetch(`${API}/releases/tags/stanje`,{cache:"no-store"}).then(r=>r.ok?r.json():null).catch(()=>null);
+      const asset=rel&&(rel.assets||[]).find(a=>a.name==="stanje.enc");
+      if(asset){ const mins=Math.floor((Date.now()-new Date(asset.updated_at))/6e4), left=GAP_HOURS*60-mins;
+        if(left>0){ say(`Poslednji sken je završen pre ${mins} min. Novi može za ${Math.floor(left/60)} h ${left%60} min.`,true); return; } }
+      const r=await fetch(`${WF}/dispatches`,{method:"POST",headers:{Authorization:`Bearer ${token}`,Accept:"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"},body:JSON.stringify({ref:"main",inputs:{mode:"sken"}})});
+      if(r.status===204){ say("Sken je pokrenut. Traje oko 45 minuta, pa osveži stranicu."); setTimeout(()=>latestRun().then(run=>run&&showRunning(run)),8000); return; }
+      if(r.status===401||r.status===403||r.status===404){ setToken(null); say("Ključ ne važi ili nema dozvolu Actions: Read and write. Unesi novi.",true); form.hidden=false; return; }
+      say(`GitHub je odbio pokretanje (greška ${r.status}). Probaj ponovo za par minuta.`,true);
+    }catch(e){ say("Nema veze sa GitHubom. Proveri internet i probaj ponovo.",true); }
+    finally{ btn.disabled=false; }
+  }
+  btn.addEventListener("click",start);
+  header.append(btn,status,form);
+  latestRun().then(run=>run&&showRunning(run));
 }
 buildFilters(); render();
 // Izveštaj nosi oznake iz trenutka pravljenja; server ima najnovije. Otvoren kao fajl, dashboard koristi one iz izveštaja.
