@@ -253,3 +253,7 @@ istu stranicu taj izvor staje, sa statusom PARTIAL.
 - Jedina tajna je `PAGE_PASSWORD`. Postavlja je i šalje prvu šifrovanu bazu vlasnik: `cloud/postavi-lozinku.ps1` (lozinku kuca sam).
 - Ručno: Actions > Dnevni sken > Run workflow; `proba` samo proverava koje prodavnice odgovaraju sa GitHuba.
 - Oznake "Nije za trčanje" se na GitHubu ne menjaju; lokalne izmene se prenose ponovnim pokretanjem `postavi-lozinku.ps1`.
+
+## Direktni Đak i Planeta preko lokalnog sakupljača
+
+Kada GitHub serveri dobijaju HTTP 403 od ovih prodavnica, njihove direktne podatke može da dostavi lokalni sakupljač. Ostale prodavnice ostaju na GitHubu, a svi rezultati ulaze u isti sken, bazu i dashboard. Potrebno je prvo proveriti pristup na Windows računaru i ostaviti sakupljač otvoren. Pokretač je `cloud/pokreni-direktne-prodavnice.cmd`; detalji i potrebne dozvole su u [uputstvu](cloud/DIREKTNE_PRODAVNICE.md). Ne koriste se posredničke cene za ova dva direktna izvora.

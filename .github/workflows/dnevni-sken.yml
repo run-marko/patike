@@ -69,6 +69,10 @@ jobs:
           python main.py report
           python main.py thumbs
 
+      - name: Zatrazi direktne podatke Djaka i Planete
+        if: inputs.mode != 'proba' && inputs.mode != 'stranica'
+        run: python -m cloud.direct_collector request
+
       - name: Sken, cene u inostranstvu, izveštaj i sličice
         if: inputs.mode != 'proba' && inputs.mode != 'stranica'
         run: |
@@ -78,6 +82,10 @@ jobs:
           python main.py report
           python main.py thumbs
           echo "Sken je završio sa kodom $scan (1 = neka prodavnica nije proverena)."
+
+      - name: Ukloni zavrsenu razmenu direktnih podataka
+        if: always() && env.DIRECT_COLLECTOR_RUN_ID != ''
+        run: python -m cloud.direct_collector cleanup
 
       - name: Šifruj i sačuvaj stanje
         # samo ako je stanje uspešno preuzeto, da prazna baza nikad ne zameni pravu

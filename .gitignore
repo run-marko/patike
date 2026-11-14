@@ -7,3 +7,6 @@ __pycache__/
 # Na GitHubu se čuvaju kao fajlovi izdanja "stanje" (vidi .github/workflows/dnevni-sken.yml).
 data/
 reports/output/
+
+# Lokalni sakupljac ima sopstveno Python okruzenje.
+.venv-collector/

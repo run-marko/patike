@@ -23,9 +23,14 @@ def build_adapters(config: dict, only: list[str] | None = None) -> list[Retailer
     scan = config["scan"]
     wanted = {o.lower().replace(" ", "") for o in only} if only else None
     out = []
+    import os
+    from cloud.direct_collector import HOSTS, CollectedAdapter, ResponseSource
+    identity = os.environ.get("DIRECT_COLLECTOR_RUN_ID")
+    source = ResponseSource(identity) if identity else None
     for cls in ADAPTERS:
         if wanted and cls.key not in wanted and cls.name.lower().replace(" ", "") not in wanted:
             continue
-        out.append(cls(delay_s=scan["default_delay_s"], timeout_s=scan["request_timeout_s"],
-                       max_retries=scan["max_retries"], cache_hours=scan["sitemap_cache_hours"]))
+        adapter = cls(delay_s=scan["default_delay_s"], timeout_s=scan["request_timeout_s"],
+                      max_retries=scan["max_retries"], cache_hours=scan["sitemap_cache_hours"])
+        out.append(CollectedAdapter(adapter, source) if source and cls.key in HOSTS else adapter)
     return out

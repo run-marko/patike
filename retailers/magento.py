@@ -63,7 +63,12 @@ def parse_magento(html: str, url: str, retailer: str = "planetasport") -> list[P
     if config:
         if old is None:
             old = parse_money(config.get("prices", {}).get("oldPrice", {}).get("amount"))
-        for attribute in config.get("attributes", {}).values():
+        attributes = config.get("attributes", {})
+        if isinstance(attributes, dict):
+            attributes = attributes.values()
+        elif not isinstance(attributes, list):
+            raise ValueError("Magento: nečitljiva lista atributa")
+        for attribute in attributes:
             if attribute.get("code") != "size":
                 continue
             for option in attribute.get("options", []):

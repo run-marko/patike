@@ -1,0 +1,46 @@
+name: Direct collector checks
+on:
+  push:
+    paths:
+      - cloud/direct_collector.py
+      - cloud/start_direct_collector.py
+      - retailers/registry.py
+      - retailers/djaksport.py
+      - retailers/planetasport.py
+      - retailers/magento.py
+      - tests/fixtures/**
+      - tests/test_direct_collector.py
+      - tests/test_collector_launcher.py
+      - .github/workflows/direct-collector-tests.yml
+  pull_request:
+    paths:
+      - cloud/direct_collector.py
+      - cloud/start_direct_collector.py
+      - retailers/registry.py
+      - retailers/djaksport.py
+      - retailers/planetasport.py
+      - retailers/magento.py
+      - tests/fixtures/**
+      - tests/test_direct_collector.py
+      - tests/test_collector_launcher.py
+permissions:
+  contents: read
+jobs:
+  protocol:
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: pip install -r requirements.txt
+      - run: python -m pytest tests/test_direct_collector.py tests/test_collector_launcher.py tests/test_djaksport.py tests/test_planetasport.py -q

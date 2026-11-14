@@ -125,3 +125,16 @@ def test_blocked_site_remains_not_verified(tmp_path):
     result = adapter_for(handler, tmp_path).run(lambda _: True)
     assert result.status == "NOT_VERIFIED"
     assert not result.listings
+
+
+def test_empty_magento_attribute_list_is_not_a_parser_failure():
+    from bs4 import BeautifulSoup
+    html = product_page(stock="OutOfStock")
+    soup = BeautifulSoup(html, "lxml")
+    script = soup.select_one('script[type="text/x-magento-init"]')
+    config = json.loads(script.string)
+    config["swatches"]["renderer"]["jsonConfig"]["attributes"] = []
+    script.string = json.dumps(config)
+    item = parse_planeta(str(soup), URL)[0]
+    assert item.availability == "OUT_OF_STOCK"
+    assert item.sizes == []
