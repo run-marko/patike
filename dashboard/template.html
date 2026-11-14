@@ -194,6 +194,8 @@ table .thumb { width:48px; height:48px; border-radius:10px; }
 .tablewrap { border-radius:14px; }
 th { font-family:"Martian Mono",monospace; font-size:10px; letter-spacing:.07em; text-transform:uppercase; }
 .empty { border-radius:16px; }
+.name, .who .small { overflow-wrap:anywhere; }
+@media (min-width:761px) and (max-width:1100px) { .thumb { width:64px; height:64px; } .rank { width:20px; } .offer summary, .cols { gap:10px; } }
 @media (min-width:761px) { .offer summary, .cols { grid-template-columns:minmax(0,2fr) minmax(116px,1.1fr) 64px minmax(0,1.2fr) minmax(0,1.1fr) minmax(0,1.2fr) minmax(0,1.1fr) 52px 88px; } }
 /* slika: uvećanje, pa okret za 180 stepeni i nazad dok je kursor na njoj. Jedna fotografija po patici,
    pa je "druga strana" ista slika u ogledalu (natpisi su obrnuti); prava druga strana traži drugu fotografiju. */
@@ -501,6 +503,25 @@ const byChange=(a,b)=>{
   const x=a.history.last_change, y=b.history.last_change;
   return CHANGE_ORDER.indexOf(x.kind)-CHANGE_ORDER.indexOf(y.kind)||y.at.localeCompare(x.at)||Math.abs(y.pct)-Math.abs(x.pct);
 };
+// Alarm: cena je sada najniža koju smo ikad zabeležili za taj oglas, a ranije je bila viša.
+// Vraća {from, pct, since}: cenu pre pada, pad u odnosu na nju i datum od kog važi najniža cena.
+function allTimeLow(o){
+  const pts=o.history_points||[];
+  if(pts.length<2) return null;
+  const cur=pts[pts.length-1].price;
+  if(pts.some(p=>p.price<cur)||!pts.some(p=>p.price>cur)) return null;
+  let i=pts.length-1;
+  while(i>0&&pts[i-1].price===cur) i--;          // početak poslednjeg niza po sadašnjoj ceni
+  if(i===0) return null;                         // ranije je bila ista pa viša pa opet ista: nije nov minimum
+  if(pts.slice(0,i).some(p=>p.price<=cur)) return null;
+  return {from:pts[i-1].price,pct:cur/pts[i-1].price-1,since:pts[i].at};
+}
+const byLow=(a,b)=>{ const x=allTimeLow(a), y=allTimeLow(b); return y.since.slice(0,10).localeCompare(x.since.slice(0,10))||x.pct-y.pct; };
+function lowBadge(o){
+  const l=allTimeLow(o);
+  return l?el("div",{class:"change new_low",title:"Najniža cena koju smo zabeležili za ovaj oglas."},"▼ Najniža cena do sad",
+    el("span",{class:"small",text:`bila ${rsd(l.from)} (${pct(l.pct)}), od ${when(l.since)}`})):null;
+}
 function changeBadge(o){
   const c=o.history.last_change;
   if(!c) return null;
@@ -525,7 +546,7 @@ function offerCard(o,i) {
       el("div",{class:"lbl",text:"Cena"}),
       el("div",{class:"price",text:rsd(priceOf(o))}),
       o.old_price?el("div",{class:"old",text:rsd(o.old_price)}):null,
-      changeBadge(o),
+      state.tab==="alerts"?lowBadge(o):changeBadge(o),
       el("div",{class:"small",text:o.retailer_name+(o.seller?" / "+o.seller:"")}),
       o.sku?el("div",{class:"small xtra",text:"SKU "+o.sku}):null,
       o.other_offers?el("div",{class:"small xtra",text:`još ${o.other_offers} ponuda ovog modela (u detaljima)`}):null),
@@ -780,11 +801,13 @@ function viewOffers(){
   switch(state.tab){
     case "changes": return filtered(profileOffers(),true).filter(o=>o.history.last_change&&o.availability==="AVAILABLE").sort(sorter(byChange));
     case "all": return filtered(DATA.offers,true).slice().sort(sorter(byDeal));
+    case "alerts": return filtered(profileOffers(),true).filter(o=>o.availability==="AVAILABLE"&&!o.stale&&allTimeLow(o)).sort(sorter(byLow));
     case "used": return oneRowPerModel(filtered(profileOffers(),true).filter(o=>used.has(o.group)&&o.availability==="AVAILABLE"),byDeal);
     default: return filtered(profileOffers());
   }
 }
 const NOTES = {
+  alerts:"Ponude na stanju čija je cena sada najniža koju smo ikad zabeležili, a ranije je bila viša. Najnoviji padovi su prvi. Svaka boja i prodavnica je poseban red, a filteri (pol, broj, cena) važe i ovde.",
   used:"Modeli koje si označio kao iskorišćene u objavi, sa trenutno najboljom ponudom. Oznaka se pamti na ovom uređaju; dugme u redu je skida.",
   top:"Jedan red po modelu, sa njegovom najboljom ponudom koja ima bar 4 različita broja na stanju. Dostupno, i pouzdanost po filteru. Klasa zavisi od dokaza o ceni, a ne od popusta koji prodavac tvrdi. Klikni na naziv kolone da sortiraš; drugi klik obrće smer. Cena u SAD je preporučena cena proizvođača, bez američkog poreza, a ne ulična cena.",
   cheap:"Najniže cene dostupnih modela. Klikni na naziv kolone da sortiraš; drugi klik obrće smer.",
@@ -853,7 +876,6 @@ function render(){
   else if(state.tab==="models") nodes=modelsView();
   else if(state.tab==="compare") nodes=compareView();
   else if(state.tab==="stores") nodes=storesView();
-  else if(state.tab==="alerts") nodes=simpleList(DATA.alerts,a=>el("tr",{},el("td",{class:"small",text:when(a.created_at)}),el("td",{text:a.message})),"Nema alarma. Pravila se podešavaju u config.yaml (watchlist).","Alarmi se računaju posle skena. Aplikacija ne prati sajtove neprekidno.");
   else if(state.tab==="review") nodes=simpleList(DATA.review,r=>el("tr",{},el("td",{text:r.retailer}),el("td",{},safeUrl(r.url)?el("a",{href:safeUrl(r.url),target:"_blank",rel:"noopener",text:r.title}):r.title),el("td",{class:"small",text:r.reason})),"Nema dvosmislenih uparivanja.","Oglasi koji nisu sigurno upareni sa katalogom. Ne ulaze u rang dok se ne razjasne.");
   else nodes=list("",isSearching()?"Pretraga: svi modeli na stanju sa tim imenom, i oni koji nisu u rangu i imaju nisku pouzdanost ili premalo podataka. Pouzdanost piše u svakom redu. Rasprodati modeli su u kartici Svi modeli.":NOTES[state.tab]||"",viewOffers());
   box.append(...nodes.flat().filter(Boolean));
