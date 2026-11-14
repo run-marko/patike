@@ -90,8 +90,10 @@ jobs:
 
       - name: Samo stranica (bez skena cena)
         if: inputs.mode == 'stranica'
-        # thumbs preuzima samo sličice koje fale (obično nijednu), pa ponovo pravi izveštaj
-        run: python main.py thumbs
+        # izveštaj pravi spisak ponuda; thumbs zatim preuzima samo sličice koje fale i ponovo pravi izveštaj
+        run: |
+          python main.py report
+          python main.py thumbs
 
       - name: Sken, cene u inostranstvu, izveštaj i sličice
         if: inputs.mode != 'proba' && inputs.mode != 'stranica'
