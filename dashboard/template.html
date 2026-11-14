@@ -194,13 +194,16 @@ table .thumb { width:48px; height:48px; border-radius:10px; }
 .tablewrap { border-radius:14px; }
 th { font-family:"Martian Mono",monospace; font-size:10px; letter-spacing:.07em; text-transform:uppercase; }
 .empty { border-radius:16px; }
-/* slika: uvećanje i jedan okret oko uspravne ose (ravna slika; pravih 360 traži slike iz više uglova) */
-.thumb { position:relative; transform-origin:left center; }
+@media (min-width:761px) { .offer summary, .cols { grid-template-columns:minmax(0,2fr) minmax(116px,1.1fr) 64px minmax(0,1.2fr) minmax(0,1.1fr) minmax(0,1.2fr) minmax(0,1.1fr) 52px 88px; } }
+/* slika: uvećanje, pa okret za 180 stepeni i nazad dok je kursor na njoj. Jedna fotografija po patici,
+   pa je "druga strana" ista slika u ogledalu (natpisi su obrnuti); prava druga strana traži drugu fotografiju. */
+.who { perspective:900px; }
+.thumb { position:relative; transform-origin:left center; transition:scale .3s ease, box-shadow .3s ease; }
 .thumb:not(.none) { cursor:zoom-in; }
-@keyframes spin360 { 0% { transform:perspective(900px) scale(1) rotateY(0); } 22% { transform:perspective(900px) scale(2.7) rotateY(0); } 100% { transform:perspective(900px) scale(2.7) rotateY(360deg); } }
-@media (hover:hover) { .thumb:not(.none):hover { animation:spin360 1.6s cubic-bezier(.3,.1,.2,1) both; z-index:30; box-shadow:0 20px 44px rgba(0,0,0,.4); } }
-.thumb.zoom { animation:spin360 1.6s cubic-bezier(.3,.1,.2,1) both; z-index:30; box-shadow:0 20px 44px rgba(0,0,0,.4); cursor:zoom-out; }
-@media (prefers-reduced-motion:reduce) { .thumb:not(.none):hover, .thumb.zoom { animation:none; transform:scale(2.7); } .offer { transition:none; } }
+@keyframes turn180 { 0%,12% { rotate:y 0deg; } 50%,62% { rotate:y 180deg; } 100% { rotate:y 360deg; } }
+@media (hover:hover) { .thumb:not(.none):hover { scale:2.7; z-index:30; box-shadow:0 20px 44px rgba(0,0,0,.4); animation:turn180 5s .35s ease-in-out infinite; } }
+.thumb.zoom { scale:2.7; z-index:30; box-shadow:0 20px 44px rgba(0,0,0,.4); animation:turn180 5s .35s ease-in-out infinite; cursor:zoom-out; }
+@media (prefers-reduced-motion:reduce) { .thumb:not(.none):hover, .thumb.zoom { animation:none; } .offer, .thumb { transition:none; } }
 @media (max-width:760px) {
   header { padding:18px 16px 8px; } h1 { font-size:26px; }
   .filters { top:0; padding:10px 12px; border-radius:14px; }
