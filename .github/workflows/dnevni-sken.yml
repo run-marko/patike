@@ -69,6 +69,10 @@ jobs:
           python main.py report
           python main.py thumbs
 
+      - name: Ukljuci privatni servis za direktne prodavnice
+        if: inputs.mode != 'proba' && inputs.mode != 'stranica'
+        run: python -m cloud.hosted_collector
+
       - name: Zatrazi direktne podatke Djaka i Planete
         if: inputs.mode != 'proba' && inputs.mode != 'stranica'
         run: python -m cloud.direct_collector request

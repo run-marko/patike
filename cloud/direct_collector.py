@@ -99,6 +99,9 @@ def validate_request(data: dict, identity: str | None = None) -> str:
 
 def request() -> None:
     """Called once before the cloud scan. Offline collectors never delay other retailers."""
+    if os.environ.get("HOSTED_COLLECTOR_TOKEN"):
+        print("Đak i Planeta se čitaju preko privatnog servisa u oblaku; lokalni računar nije potreban.", flush=True)
+        return
     identity = run_id(os.environ["GITHUB_RUN_ID"])
     try:
         with tempfile.TemporaryDirectory() as folder:

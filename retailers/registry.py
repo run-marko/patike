@@ -26,11 +26,16 @@ def build_adapters(config: dict, only: list[str] | None = None) -> list[Retailer
     import os
     from cloud.direct_collector import HOSTS, CollectedAdapter, ResponseSource
     identity = os.environ.get("DIRECT_COLLECTOR_RUN_ID")
-    source = ResponseSource(identity) if identity else None
+    hosted = bool(os.environ.get("HOSTED_COLLECTOR_TOKEN"))
+    source = ResponseSource(identity) if identity and not hosted else None
     for cls in ADAPTERS:
         if wanted and cls.key not in wanted and cls.name.lower().replace(" ", "") not in wanted:
             continue
+        kwargs = {}
+        if hosted and cls.key in HOSTS:
+            from cloud.hosted_collector import hosted_client
+            kwargs["client"] = hosted_client(cls.base_url, scan)
         adapter = cls(delay_s=scan["default_delay_s"], timeout_s=scan["request_timeout_s"],
-                      max_retries=scan["max_retries"], cache_hours=scan["sitemap_cache_hours"])
+                      max_retries=scan["max_retries"], cache_hours=scan["sitemap_cache_hours"], **kwargs)
         out.append(CollectedAdapter(adapter, source) if source and cls.key in HOSTS else adapter)
     return out
