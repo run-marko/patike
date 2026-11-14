@@ -1,0 +1,44 @@
+name: Provera pristupa kategorijama
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/provera-pristupa-jednom.yml]
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Proveri javne kategorije i proizvod bez skena i tajni
+        run: |
+          python -u - <<'PY'
+          from retailers.djaksport import DjakSportAdapter
+          from retailers.planetasport import PlanetaSportAdapter
+          from common.http import FetchError
+          from bs4 import BeautifulSoup
+          import json
+          targets=[(DjakSportAdapter,'https://www.djaksport.com/adidas-patike-adizero-evo-sl-m-za-muskarce-jh6206'),(PlanetaSportAdapter,'https://planetasport.rs/adidas-patike-supernova-ease-2-m-jq4335.html')]
+          for cls, product in targets:
+              a=cls(max_retries=0)
+              def observe(response):
+                  response.read()
+                  soup=BeautifulSoup(response.text,'lxml')
+                  print(json.dumps({'host':str(response.url.host),'path':response.url.path,'http':response.status_code,'title':soup.title.get_text()[:120] if soup.title else None}),flush=True)
+              a.client._client.event_hooks['response']=[observe]
+              try:
+                  r=a.client.get(a.running_category_urls[0])
+                  soup=BeautifulSoup(r.text,'lxml')
+                  print(a.key,'category product links',len(soup.select('.product-item-name a')),flush=True)
+                  r=a.client.get(product)
+                  for p in a.parse_page(r.text,product):
+                      print(json.dumps({'retailer':p.retailer,'sku':p.sku,'price':p.current_price,'sizes':[(s.label,s.available) for s in p.sizes]}),flush=True)
+              except FetchError as exc:
+                  print(a.key,type(exc).__name__,str(exc),flush=True)
+          PY
