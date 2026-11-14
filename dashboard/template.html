@@ -975,12 +975,12 @@ if(ageHours>STALE_HOURS) meta.after(el("div",{class:"stale",role:"alert",text:`P
 const pagesHost=location.hostname.endsWith(".github.io");
 const REPO=pagesHost?`${location.hostname.split(".")[0]}/${location.pathname.split("/")[1]}`:null;
 if(REPO){
-  const API=`https://api.github.com/repos/${REPO}`, WF=`${API}/actions/workflows/dnevni-sken.yml`, TOKEN_KEY="gh-scan-token", GAP_HOURS=3;
+  const API=`https://api.github.com/repos/${REPO}`, WF=`${API}/actions/workflows/dnevni-sken.yml`, TOKEN_KEY="gh-scan-token";
   const getToken=()=>{ try{ return localStorage.getItem(TOKEN_KEY); }catch(e){ return null; } };
   const setToken=t=>{ try{ t?localStorage.setItem(TOKEN_KEY,t):localStorage.removeItem(TOKEN_KEY); }catch(e){} };
   const header=document.querySelector("header");
   const status=el("div",{class:"running",role:"status"});
-  const btn=el("button",{class:"scanbtn",type:"button",title:"Pokreće sken na GitHubu. Traje oko 45 minuta, a ručni je dozvoljen jednom u 3 sata.",text:"Pokreni sken"});
+  const btn=el("button",{class:"scanbtn",type:"button",title:"Pokreće sken na GitHubu. Traje oko 45 minuta.",text:"Pokreni sken"});
   const say=(t,bad)=>{ status.textContent=t; status.style.color=bad?"var(--bad)":""; };
   const latestRun=()=>fetch(`${WF}/runs?per_page=3`,{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>((j&&j.workflow_runs)||[]).find(r=>["in_progress","queued","waiting","requested","pending"].includes(r.status))).catch(()=>null);
   const showRunning=run=>say(`Sken je u toku od ${new Date(run.run_started_at||run.created_at).toLocaleTimeString("sr-RS",{timeStyle:"short"})}. Nove cene stižu za oko 45 minuta, pa osveži stranicu.`);
@@ -1005,11 +1005,6 @@ if(REPO){
     try{
       const run=await latestRun();
       if(run){ showRunning(run); return; }
-      // Isto pravilo kao u workflow-u: ručni sken najviše jednom u 3 sata.
-      const rel=await fetch(`${API}/releases/tags/stanje`,{cache:"no-store"}).then(r=>r.ok?r.json():null).catch(()=>null);
-      const asset=rel&&(rel.assets||[]).find(a=>a.name==="stanje.enc");
-      if(asset){ const mins=Math.floor((Date.now()-new Date(asset.updated_at))/6e4), left=GAP_HOURS*60-mins;
-        if(left>0){ say(`Poslednji sken je završen pre ${mins} min. Novi može za ${Math.floor(left/60)} h ${left%60} min.`,true); return; } }
       const r=await fetch(`${WF}/dispatches`,{method:"POST",headers:{Authorization:`Bearer ${token}`,Accept:"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"},body:JSON.stringify({ref:"main",inputs:{mode:"sken"}})});
       if(r.status===204){ say("Sken je pokrenut. Traje oko 45 minuta, pa osveži stranicu."); setTimeout(()=>latestRun().then(run=>run&&showRunning(run)),8000); return; }
       if(r.status===401||r.status===403||r.status===404){ setToken(null); say("Ključ ne važi ili nema dozvolu Actions: Read and write. Unesi novi.",true); form.hidden=false; return; }

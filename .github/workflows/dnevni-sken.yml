@@ -27,36 +27,10 @@ concurrency:
 env:
   GH_TOKEN: ${{ github.token }}
   GH_REPO: ${{ github.repository }}
-  MANUAL_GAP_HOURS: "3"
   BACKUPS: "7"
 
 jobs:
-  # Ručni sken je dozvoljen jednom u 3 sata, da prodavnice ne dobijaju nepotrebne zahteve.
-  provera:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    outputs:
-      skip: ${{ steps.gap.outputs.skip }}
-    steps:
-      - name: Razmak od poslednjeg skena
-        id: gap
-        run: |
-          skip=false
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.mode }}" = "sken" ]; then
-            last=$(gh release view stanje --json assets --jq '[.assets[]|select(.name=="stanje.enc")][0].updatedAt' || true)
-            if [ -n "$last" ] && [ "$last" != "null" ]; then
-              age=$(( $(date +%s) - $(date -d "$last" +%s) ))
-              if [ "$age" -lt $(( MANUAL_GAP_HOURS * 3600 )) ]; then
-                skip=true
-                echo "::warning::Poslednji sken je završen pre $(( age / 60 )) min. Ručni sken je dozvoljen jednom u ${MANUAL_GAP_HOURS} sata, pa je ovaj preskočen."
-              fi
-            fi
-          fi
-          echo "skip=$skip" >> "$GITHUB_OUTPUT"
-
   sken:
-    needs: provera
-    if: needs.provera.outputs.skip != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 150
     env:
