@@ -1,0 +1,51 @@
+name: Osvezi dashboard bez skena
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/osvezi-dashboard-jednom.yml]
+permissions:
+  contents: write
+concurrency:
+  group: dnevni-sken
+  cancel-in-progress: false
+jobs:
+  stranica:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PAGE_PASSWORD: ${{ secrets.PAGE_PASSWORD }}
+      TZ: Europe/Belgrade
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Zavisnosti
+        run: pip install -r requirements.txt
+      - name: Preuzmi postojece stanje
+        run: |
+          test -n "$PAGE_PASSWORD"
+          gh release download stanje --pattern stanje.enc --dir "$RUNNER_TEMP"
+          node cloud/crypt.mjs dec "$RUNNER_TEMP/stanje.enc" "$RUNNER_TEMP/stanje.tar.gz"
+          python -m cloud.state unpack "$RUNNER_TEMP/stanje.tar.gz"
+          rm "$RUNNER_TEMP/stanje.tar.gz" "$RUNNER_TEMP/stanje.enc"
+      - name: Obnovi stranicu iz postojecih podataka
+        run: |
+          python main.py report
+          python main.py thumbs
+          mkdir -p site/thumbs
+          cp reports/output/thumbs/*.webp site/thumbs/ || true
+          node cloud/encrypt_page.mjs reports/output/page.html site/index.html
+          touch site/.nojekyll
+          printf "User-agent: *\nDisallow: /\n" > site/robots.txt
+      - name: Objavi stranicu
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ github.token }}
+          publish_branch: gh-pages
+          publish_dir: ./site
+          force_orphan: true
+          commit_message: "Dashboard bez ogranicenja od tri sata"
