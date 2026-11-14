@@ -2,7 +2,7 @@
 
 Artifakt ne sme da učitava slike sa sajtova prodavnica (CSP), pa slike moraju da idu uz njega.
 Svaka slika se preuzima samo jednom, uz robots.txt i razmak između zahteva (PoliteClient), smanji se
-na 144 px (dvostruko od 72 px na ekranu, oštro i na telefonu) i čuva u data/thumbs.
+na 200 px (88 px na ekranu, do ~240 px kad se uveća) i čuva u data/thumbs.
 Za artifakt se sličice slažu u nekoliko WebP listova (sprite), jer artifakt ima ograničen broj fajlova,
 a jedan list od 256 sličica je manji od 256 posebnih fajlova.
 """
@@ -26,7 +26,7 @@ log = logging.getLogger(__name__)
 ROOT = Path(__file__).resolve().parent.parent
 CACHE = ROOT / "data" / "thumbs"
 FAILED = CACHE / "failed.json"
-TILE = 144          # px, kvadrat
+TILE = 200          # px, kvadrat; slika se na prelazak mišem uveća na ~240 px, pa 144 nije bilo dovoljno oštro
 GRID = 16           # 16 x 16 = 256 sličica po listu
 QUALITY = 80        # WebP; ispod ~75 se na belim đonovima vide mrlje
 RETRY_FAILED_DAYS = 7
@@ -37,7 +37,7 @@ def key(url: str) -> str:
 
 
 def path_for(url: str) -> Path:
-    return CACHE / f"{key(url)}.webp"
+    return CACHE / f"{key(url)}-{TILE}.webp"  # veličina u imenu: promena TILE ne meša stare i nove sličice
 
 
 def to_tile(data: bytes) -> Image.Image:
@@ -71,6 +71,9 @@ def missing(urls: list[str]) -> list[str]:
 def fetch(urls: list[str], delay_s: float = 1.5) -> dict[str, int]:
     """Preuzima sličice koje fale. Jedna nit po sajtu, svaki sajt ima svoj razmak između zahteva."""
     CACHE.mkdir(parents=True, exist_ok=True)
+    for old in CACHE.glob("*.webp"):  # sličice druge veličine više ne trebaju
+        if not old.name.endswith(f"-{TILE}.webp"):
+            old.unlink()
     todo = missing(urls)
     by_host: dict[str, list[str]] = {}
     for u in todo:

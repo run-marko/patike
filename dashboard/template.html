@@ -4,23 +4,30 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Deal Finder Patike</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Martian+Mono:wght@400;600&display=swap">
 <style>
 :root {
+  /* run.marko: Linija (svetla) i Asfalt (tamna) podloga, Hi-vis narandžasta za akciju, Sat mint za dobru ponudu.
+     Archivo za tekst, Martian Mono za cene i brojeve (kao na sportskom satu). */
   color-scheme: light;
-  --page:#eaf1f8; --surface:#ffffff; --ink:#0b0b0b; --ink2:#52514e; --muted:#6f6d68; --grid:#e1e0d9; --axis:#c3c2b7;
-  --border:rgba(11,11,11,.12); --accent:#256abf; --good:#006300; --bad:#b52f2f; --warn:#8a5a00; --wash:rgba(11,11,11,.04);
+  --page:#F4F5F1; --surface:#ffffff; --ink:#15171B; --ink2:#454952; --muted:#6b6f79; --grid:#e3e4de; --axis:#c6c8c0;
+  --border:rgba(21,23,27,.13); --accent:#C2410C; --good:#0A7A52; --bad:#C22B2B; --warn:#8a5a00; --wash:rgba(21,23,27,.05);
+  --hot:#FF5A1F; --on-hot:#15171B; --mint:#7DEFC0; --on-mint:#0c2b20; --shadow:0 10px 30px rgba(21,23,27,.10);
   --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;--s7:#6250d6;--s8:#e34948;
 }
 @media (prefers-color-scheme: dark) { :root:where(:not([data-theme="light"])) {
   color-scheme: dark;
-  --page:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#9a9890; --grid:#2c2c2a; --axis:#383835;
-  --border:rgba(255,255,255,.12); --accent:#6da7ec; --good:#3fbf3f; --bad:#e66767; --warn:#e0a93a; --wash:rgba(255,255,255,.05);
+  --page:#15171B; --surface:#1E2127; --ink:#F4F5F1; --ink2:#C3C6CC; --muted:#8E929B; --grid:#2B2F37; --axis:#3A3F49;
+  --border:rgba(244,245,241,.13); --accent:#FF8A5C; --good:#7DEFC0; --bad:#FF7070; --warn:#F0B040; --wash:rgba(244,245,241,.06);
+  --hot:#FF5A1F; --on-hot:#15171B; --mint:#7DEFC0; --on-mint:#0c2b20; --shadow:0 14px 36px rgba(0,0,0,.45);
   --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;
 }}
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --page:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#9a9890; --grid:#2c2c2a; --axis:#383835;
-  --border:rgba(255,255,255,.12); --accent:#6da7ec; --good:#3fbf3f; --bad:#e66767; --warn:#e0a93a; --wash:rgba(255,255,255,.05);
+  --page:#15171B; --surface:#1E2127; --ink:#F4F5F1; --ink2:#C3C6CC; --muted:#8E929B; --grid:#2B2F37; --axis:#3A3F49;
+  --border:rgba(244,245,241,.13); --accent:#FF8A5C; --good:#7DEFC0; --bad:#FF7070; --warn:#F0B040; --wash:rgba(244,245,241,.06);
+  --hot:#FF5A1F; --on-hot:#15171B; --mint:#7DEFC0; --on-mint:#0c2b20; --shadow:0 14px 36px rgba(0,0,0,.45);
   --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;
 }
 * { box-sizing:border-box; }
@@ -96,7 +103,7 @@ table .thumb { width:44px; height:44px; }
 .store { padding:2px 7px; border:1px solid var(--border); border-radius:4px; font-size:12px; font-variant-numeric:tabular-nums; text-decoration:none; }
 .store:hover { background:var(--wash); }
 .store.hand { border-style:dashed; color:var(--ink2); }
-.store.mark { margin-left:auto; color:var(--ink2); }
+.store.usedbtn { margin-left:auto; } .store.mark { color:var(--ink2); }
 .notice { max-width:none; padding:8px 10px; background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--ink); }
 .store span { color:var(--ink2); }
 table { border-collapse:collapse; width:100%; background:var(--surface); }
@@ -132,11 +139,83 @@ td.num { font-variant-numeric:tabular-nums; text-align:right; }
   .detail { grid-template-columns:minmax(0,1fr); } .detail > div { min-width:0; overflow-wrap:anywhere; }
   input[type=search] { width:100%; }
 }
+
+/* ===== izgled run.marko ===== */
+body { font:14px/1.45 "Archivo",system-ui,-apple-system,"Segoe UI",sans-serif; }
+.mono, .price, .old, .big, .score, .size, .store, td.num, .sub, .cols .sort, .rank { font-family:"Martian Mono",ui-monospace,Consolas,monospace; font-variant-numeric:tabular-nums; }
+header { padding:26px 20px 10px; display:grid; grid-template-columns:1fr auto; gap:6px 16px; align-items:end; }
+h1 { font:900 34px/0.95 "Archivo",sans-serif; font-stretch:125%; text-transform:uppercase; letter-spacing:-.02em; margin:0; text-wrap:balance; }
+h1 em { font-style:normal; color:var(--hot); }
+.lane { grid-column:1 / -1; height:5px; border-radius:3px; background:repeating-linear-gradient(90deg,var(--hot) 0 34px,transparent 34px 52px); opacity:.9; }
+.sub { grid-column:1 / -1; font-size:11px; color:var(--muted); line-height:1.6; }
+.sub a { color:inherit; }
+.theme { border-radius:999px; width:38px; height:38px; padding:0; font-size:17px; line-height:1; }
+.scanbtn { grid-column:1 / -1; justify-self:start; margin-top:4px; border-radius:999px; padding:7px 14px; background:var(--ink); color:var(--page); border-color:var(--ink); }
+.stale, .running, .tokenform { grid-column:1 / -1; }
+.tokenform { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 14px; max-width:520px; }
+button, select, input { border-radius:10px; }
+button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible { outline:2px solid var(--hot); outline-offset:2px; }
+.filters { margin-top:8px; padding:12px 14px; background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow); align-items:flex-end; gap:10px; top:8px; }
+.filters label, .field { font-family:"Martian Mono",monospace; font-size:9.5px; letter-spacing:.09em; text-transform:uppercase; gap:4px; }
+.filters select, .filters input, .multi summary { background:var(--page); padding:7px 9px; font-family:"Archivo",sans-serif; font-size:14px; letter-spacing:0; text-transform:none; border-radius:10px; }
+.filters .multi-grid label { font-family:"Archivo",sans-serif; letter-spacing:0; text-transform:none; }
+.chip { border-radius:999px; padding:7px 13px; font-weight:600; white-space:nowrap; background:var(--page); }
+.chip[aria-pressed=true], .mine[aria-pressed=true] { background:var(--ink); color:var(--page); border-color:var(--ink); }
+nav.tabs { gap:6px; margin:16px 0 14px; }
+nav.tabs button { border-radius:999px; padding:7px 14px; font-weight:600; background:transparent; }
+nav.tabs button:hover { background:var(--wash); }
+nav.tabs button[aria-selected=true] { background:var(--hot); color:var(--on-hot); border-color:var(--hot); }
+.note { font-size:13px; }
+.cols { background:var(--page); }
+.cols .sort { font-size:10px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
+.offer { position:relative; border-radius:16px; margin-bottom:10px; transition:border-color .15s, box-shadow .15s, transform .15s; }
+.offer:hover, .offer[open] { border-color:color-mix(in srgb,var(--hot) 55%,var(--border)); box-shadow:var(--shadow); }
+.offer summary { padding:16px 18px; gap:14px; }
+.who { gap:12px; }
+.rank { flex:none; width:26px; padding-top:4px; font-size:12px; font-weight:600; color:var(--muted); }
+.thumb { width:88px; height:88px; border-radius:14px; }
+table .thumb { width:48px; height:48px; border-radius:10px; }
+.name { font:700 16px/1.2 "Archivo",sans-serif; font-stretch:112%; letter-spacing:-.01em; margin-bottom:2px; }
+.price { font-size:18px; letter-spacing:-.05em; white-space:nowrap; }
+.big, .score { letter-spacing:-.03em; }
+.disc { display:inline-block; background:var(--hot); color:var(--on-hot); font-size:13px; font-weight:600; padding:2px 8px; border-radius:7px; }
+.cls { font-family:"Martian Mono",monospace; font-size:10px; letter-spacing:.04em; }
+.cls.top, .cls.fill { padding:2px 7px; border-radius:6px; border:1px solid var(--good); }
+.cls.fill { background:var(--mint); color:var(--on-mint); border-color:var(--mint); }
+.change { font-family:"Martian Mono",monospace; font-size:11px; }
+.stores { gap:6px; }
+.store { border-radius:999px; padding:4px 11px; font-size:11.5px; color:var(--ink); background:var(--page); }
+.stores > a.store:first-of-type { border-color:var(--hot); }
+.store.mark, .store.usedbtn { font-family:"Archivo",sans-serif; font-weight:600; }
+.store.usedbtn[aria-pressed=true] { background:var(--hot); color:var(--on-hot); border-color:var(--hot); }
+.size { border-radius:6px; font-size:11px; }
+.offer.used summary > :not(.stores) { opacity:.45; }
+.offer.used::after { content:"ISKORIŠĆENO"; position:absolute; top:12px; right:14px; font:600 10px "Martian Mono",monospace; letter-spacing:.14em; color:var(--hot); border:1.5px solid var(--hot); border-radius:5px; padding:2px 7px; transform:rotate(3deg); background:var(--surface); }
+.tablewrap { border-radius:14px; }
+th { font-family:"Martian Mono",monospace; font-size:10px; letter-spacing:.07em; text-transform:uppercase; }
+.empty { border-radius:16px; }
+/* slika: uvećanje i jedan okret oko uspravne ose (ravna slika; pravih 360 traži slike iz više uglova) */
+.thumb { position:relative; transform-origin:left center; }
+.thumb:not(.none) { cursor:zoom-in; }
+@keyframes spin360 { 0% { transform:perspective(900px) scale(1) rotateY(0); } 22% { transform:perspective(900px) scale(2.7) rotateY(0); } 100% { transform:perspective(900px) scale(2.7) rotateY(360deg); } }
+@media (hover:hover) { .thumb:not(.none):hover { animation:spin360 1.6s cubic-bezier(.3,.1,.2,1) both; z-index:30; box-shadow:0 20px 44px rgba(0,0,0,.4); } }
+.thumb.zoom { animation:spin360 1.6s cubic-bezier(.3,.1,.2,1) both; z-index:30; box-shadow:0 20px 44px rgba(0,0,0,.4); cursor:zoom-out; }
+@media (prefers-reduced-motion:reduce) { .thumb:not(.none):hover, .thumb.zoom { animation:none; transform:scale(2.7); } .offer { transition:none; } }
+@media (max-width:760px) {
+  header { padding:18px 16px 8px; } h1 { font-size:26px; }
+  .filters { top:0; padding:10px 12px; border-radius:14px; }
+  .thumb { width:72px; height:72px; }
+  .rank { width:22px; }
+  .offer summary { padding:12px 14px; }
+  .offer.used::after { top:auto; bottom:10px; right:10px; }
+}
 </style>
 </head>
 <body>
 <header>
-  <h1>Running Shoe Deal Finder Srbija</h1>
+  <h1>Patike <em>na popustu</em></h1>
+  <button class="theme" id="theme" type="button" aria-label="Promeni svetlu i tamnu temu" title="Svetla / tamna tema">◐</button>
+  <div class="lane" aria-hidden="true"></div>
   <div class="sub" id="meta"></div>
 </header>
 <main>
@@ -169,7 +248,7 @@ const when = s => s ? new Date(s+"Z").toLocaleString("sr-RS",{dateStyle:"short",
 const fullName = o => { const tags=[...o.qualifiers,...(o.gender==="unisex"?["unisex"]:[])]; return `${o.brand} ${o.model}${tags.length?" ("+tags.join(", ")+")":""}`; };
 const safeUrl = u => /^https?:\/\//.test(u||"") ? u : null;
 
-const state = {tab:"top", q:"", gender:DATA.profile.gender, brand:"", sizes:new Set(), retailer:"", category:"", maxPrice:"", confidence:DATA.profile.minimum_deal_confidence, sort:"", dir:1, minDiscount:""};
+const state = {tab:"top", q:"", gender:DATA.profile.gender, brand:"", sizes:new Set(), retailer:"", category:"", maxPrice:"", minPrice:"", min4:false, hideUsed:false, confidence:DATA.profile.minimum_deal_confidence, sort:"", dir:1, minDiscount:""};
 // Izbor (kartica, pol, brojevi) se pamti u ovom pregledaču, da stranica sledeći put ne kreće od nule.
 const PREFS="patike-izbor";
 try{
@@ -178,12 +257,37 @@ try{
     if(["men","women"].includes(saved.gender)) state.gender=saved.gender;
     if(typeof saved.tab==="string") state.tab=saved.tab;
     if(Array.isArray(saved.sizes)) state.sizes=new Set(saved.sizes.map(String));
+    state.min4=saved.min4===true; state.hideUsed=saved.hideUsed===true;
   }
 }catch(e){}
-function savePrefs(){ try{ localStorage.setItem(PREFS,JSON.stringify({tab:state.tab,gender:state.gender,sizes:[...state.sizes]})); }catch(e){} }
+function savePrefs(){ try{ localStorage.setItem(PREFS,JSON.stringify({tab:state.tab,gender:state.gender,sizes:[...state.sizes],min4:state.min4,hideUsed:state.hideUsed})); }catch(e){} }
+// "Iskorišćeno": modeli koje je Marko već upotrebio u objavi. Pamti se u ovom pregledaču (localStorage),
+// po modelu, polu i varijanti (o.group), pa ženski i muški model imaju svaki svoju oznaku.
+const USED_KEY="patike-iskorisceno";
+let used=new Map();
+try{ used=new Map(Object.entries(JSON.parse(localStorage.getItem(USED_KEY)||"{}"))); }catch(e){}
+function setUsed(group,on){
+  if(on) used.set(group,new Date().toISOString().slice(0,10)); else used.delete(group);
+  try{ localStorage.setItem(USED_KEY,JSON.stringify(Object.fromEntries(used))); }catch(e){}
+  render();
+}
+function usedButton(group){
+  const on=used.has(group);
+  return el("button",{class:"store usedbtn",type:"button","aria-pressed":String(on),text:on?"✓ Iskorišćeno":"Označi iskorišćeno",
+    title:on?`Označeno ${used.get(group)}. Klik vraća model.`:"Označi da si ovaj model već iskoristio u objavi. Pamti se na ovom uređaju.",
+    onclick:e=>{e.preventDefault();e.stopPropagation();setUsed(group,!on);}});
+}
+// Tema: podrazumevano prati uređaj; dugme u zaglavlju je menja i pamti.
+const THEME_KEY="patike-tema";
+try{ const t=localStorage.getItem(THEME_KEY); if(t==="dark"||t==="light") document.documentElement.dataset.theme=t; }catch(e){}
+document.getElementById("theme").addEventListener("click",()=>{
+  const dark=document.documentElement.dataset.theme?document.documentElement.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
+  const next=dark?"light":"dark"; document.documentElement.dataset.theme=next;
+  try{ localStorage.setItem(THEME_KEY,next); }catch(e){}
+});
 const TABS = [
   ["top","Top 20"],["models","Svi modeli"],["cheap","Najjeftinije"],["long","Duge staze"],["daily","Svakodnevne"],["speed","Tempo i trka"],
-  ["changes","Promene cena"],["compare","Poređenje prodavnica"],["all","Sve ponude"],["alerts","Alarmi"],["review","Ručna provera"],["notrunning","Nije za trčanje"],["stores","Prodavnice"],
+  ["changes","Promene cena"],["compare","Poređenje prodavnica"],["all","Sve ponude"],["alerts","Alarmi"],["review","Ručna provera"],["used","Iskorišćeni"],["notrunning","Nije za trčanje"],["stores","Prodavnice"],
 ];
 // Ručne oznake modela. Važe za ceo model, sa svim polovima i varijantama; čuva ih lokalni server u data/not_running.json.
 const notRunning=new Map(Object.entries(DATA.not_running||{}));
@@ -255,6 +359,9 @@ function filtered(pool, anyConfidence) {
     if (state.category && !o.categories.includes(state.category)) return false;
     if (!hasPicked(o)) return false;
     if (state.maxPrice && priceOf(o)>Number(state.maxPrice)) return false;
+    if (state.minPrice && priceOf(o)<Number(state.minPrice)) return false;
+    if (state.min4 && liveLabels(o).length<TOP_MIN_SIZES) return false;
+    if (state.hideUsed && state.tab!=="used" && used.has(o.group)) return false;
     if (state.minDiscount && (o.claimed_discount||0)*100<Number(state.minDiscount)) return false;
     if (!anyConfidence && state.confidence && CONF[o.confidence]<CONF[state.confidence]) return false;
     return true;
@@ -361,6 +468,14 @@ const byGroup=new Map();
 for(const o of DATA.offers){ if(!byGroup.has(o.group)) byGroup.set(o.group,[]); byGroup.get(o.group).push(o); }
 
 // Slika ponude; bez nje slika istog modela iz druge ponude, pa natpis umesto slike.
+// Dodir po slici je uvećava i okrene (na računaru to radi prelazak mišem); drugi dodir je vraća.
+function zoomable(node){
+  node.addEventListener("click",e=>{ e.preventDefault(); e.stopPropagation();
+    const on=!node.classList.contains("zoom");
+    document.querySelectorAll(".thumb.zoom").forEach(t=>t.classList.remove("zoom"));
+    node.classList.toggle("zoom",on); });
+  return node;
+}
 function shoeImage(o){
   const other=(byGroup.get(o.group)||[]).find(x=>safeUrl(x.image_url));
   const src=safeUrl(o.image_url)||(other?other.image_url:null);
@@ -371,11 +486,11 @@ function shoeImage(o){
     const t=(DATA.thumbs||{})[o.image_url]||(other&&(DATA.thumbs||{})[other.image_url]);
     if(!t) return blank();
     const [sheet,col,row,rows]=t, grid=16;
-    return el("div",{class:"thumb",role:"img","aria-label":fullName(o),
-      style:`background:#fff url(thumbs/${sheet}.webp) ${col/(grid-1)*100}% ${rows>1?row/(rows-1)*100:0}%/${grid*100}% ${rows*100}% no-repeat`});
+    return zoomable(el("div",{class:"thumb",role:"img","aria-label":fullName(o),
+      style:`background:#fff url(thumbs/${sheet}.webp) ${col/(grid-1)*100}% ${rows>1?row/(rows-1)*100:0}%/${grid*100}% ${rows*100}% no-repeat`}));
   }
   const img=el("img",{class:"thumb",src,alt:fullName(o),loading:"lazy",referrerpolicy:"no-referrer",onerror:()=>img.replaceWith(blank())});
-  return img;
+  return zoomable(img);
 }
 const CHANGES={new_low:"▼ Nova najniža cena",down:"▼ Cena snižena",up:"▲ Cena podignuta"};
 const CHANGE_ORDER=Object.keys(CHANGES);
@@ -390,11 +505,13 @@ function changeBadge(o){
   return el("div",{class:"change "+c.kind,title:help},CHANGES[c.kind],
     el("span",{class:"small",text:`bila ${rsd(c.from)} (${pct(c.pct)}), ${when(c.at)}`}));
 }
-function offerCard(o) {
+function offerCard(o,i) {
+  const rank=RANK_TABS.includes(state.tab)&&!state.sort&&Number.isInteger(i)?String(i+1).padStart(2,"0"):null;
   const clsName = ["EXCEPTIONAL","VERY GOOD"].includes(o.classification)?"fill":o.classification==="GOOD"?"top":o.classification==="OVERPRICED"?"over":o.classification==="INSUFFICIENT DATA"?"none":"";
   const hist = o.history.advantage!==null?`Istorija: ${pct(o.history.advantage)}`:`Istorija: nema dovoljno podataka (${o.history.observations} opažanja)`;
   const summary = el("summary",{},
     el("div",{class:"who"},
+      rank?el("div",{class:"rank",title:"Mesto na ovoj listi",text:rank}):null,
       shoeImage(o),
       el("div",{},
         el("div",{class:"name",text:fullName(o)}),
@@ -411,7 +528,7 @@ function offerCard(o) {
       o.other_offers?el("div",{class:"small xtra",text:`još ${o.other_offers} ponuda ovog modela (u detaljima)`}):null),
     el("div",{title:o.claimed_discount!==null?"Popust prodavca: "+CLAIM[o.claim_status]:"Prodavac ne navodi popust"},
       el("div",{class:"lbl",text:"Popust"}),
-      el("div",{class:"big",text:discountText(o)})),
+      el("div",{class:"big"+(o.claimed_discount?" disc":""),text:discountText(o)})),
     el("div",{class:"xtra"},
       el("div",{class:"lbl",text:"Tržište"}),
       el("div",{class:"big",text:o.market_advantage===null?"-":pct(o.market_advantage)}),
@@ -439,7 +556,7 @@ function offerCard(o) {
       el("div",{class:"small xtra",text:"Pouzdanost: "+o.confidence})),
     storeLinks(o.group));
   summary.lastElementChild.classList.add("xtra");
-  const d = el("details",{class:"offer"},summary);
+  const d = el("details",{class:"offer"+(used.has(o.group)?" used":"")},summary);
   d.addEventListener("toggle",()=>{ if(d.open && !d.dataset.built){ d.dataset.built="1"; d.append(offerDetail(o)); }},{once:false});
   return d;
 }
@@ -490,6 +607,7 @@ function storeLinks(group){
       class:"store",href:safeUrl(o.url),target:"_blank",rel:"noopener"},
       o.retailer_name+" "+rsd(priceOf(o)),liveLabels(o).length?el("span",{}," | ",sizeNodes(o)):null):null),
     handChecks(group),
+    usedButton(group),
     byGroup.get(group)?.[0]?markButton(byGroup.get(group)[0]):null);
 }
 // Prodavnice koje blokiraju automatsku proveru: dugme samo otvara pretragu, a cena ne ulazi u poređenje.
@@ -618,7 +736,7 @@ function list(title,note,offers,limit){
   const shown=limit?offers.slice(0,limit):offers;
   return [el("p",{class:"note",text:note}),
     shown.length?el("div",{class:"cols"},Object.keys(COLUMNS).map(k=>el("div",{},sortButton(k)))):null,
-    shown.length?el("div",{},shown.slice(0,300).map(offerCard)):el("div",{class:"empty",text:"Nema ponuda koje prolaze filtere. Proveri da li je pokrenut sken ili olabavi filtere."}),
+    shown.length?el("div",{},shown.slice(0,300).map((o,i)=>offerCard(o,i))):el("div",{class:"empty",text:"Nema ponuda koje prolaze filtere. Proveri da li je pokrenut sken ili olabavi filtere."}),
     shown.length>300?el("p",{class:"small",text:`Prikazano prvih 300 od ${shown.length}. Suzi filtere ili izvezi CSV.`}):null];
 }
 const RANK_TABS=["top","cheap","long","daily","speed"];
@@ -659,10 +777,12 @@ function viewOffers(){
   switch(state.tab){
     case "changes": return filtered(profileOffers(),true).filter(o=>o.history.last_change&&o.availability==="AVAILABLE").sort(sorter(byChange));
     case "all": return filtered(DATA.offers,true).slice().sort(sorter(byDeal));
+    case "used": return oneRowPerModel(filtered(profileOffers(),true).filter(o=>used.has(o.group)&&o.availability==="AVAILABLE"),byDeal);
     default: return filtered(profileOffers());
   }
 }
 const NOTES = {
+  used:"Modeli koje si označio kao iskorišćene u objavi, sa trenutno najboljom ponudom. Oznaka se pamti na ovom uređaju; dugme u redu je skida.",
   top:"Jedan red po modelu, sa njegovom najboljom ponudom koja ima bar 4 različita broja na stanju. Dostupno, i pouzdanost po filteru. Klasa zavisi od dokaza o ceni, a ne od popusta koji prodavac tvrdi. Klikni na naziv kolone da sortiraš; drugi klik obrće smer. Cena u SAD je preporučena cena proizvođača, bez američkog poreza, a ne ulična cena.",
   cheap:"Najniže cene dostupnih modela. Klikni na naziv kolone da sortiraš; drugi klik obrće smer.",
   long:"Kategorija 'duge staze' je izvedena iz RunRepeat oznaka; pravilo piše u detaljima svake ponude.",
@@ -764,6 +884,11 @@ function sizePicker(sizes){
 // "Moj broj": brojevi iz config.yaml (preferred_eu_sizes, u podacima profile.sizes), za pol iz profila.
 const MY_SIZES=(DATA.profile.sizes||[]).map(String);
 const mineOn=()=>MY_SIZES.length>0&&state.sizes.size>0&&[...state.sizes].every(v=>MY_SIZES.includes(v));
+// prekidač u traci filtera: pamti se zajedno sa ostalim izborom
+function chip(key,text,title){
+  const b=el("button",{class:"chip",type:"button","aria-pressed":String(state[key]),title,text,onclick:()=>{ state[key]=!state[key]; b.setAttribute("aria-pressed",String(state[key])); render(); }});
+  return b;
+}
 function buildFilters(){
   const offers=DATA.offers;
   const uniq=f=>[...new Set(offers.map(f).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),"sr",{numeric:true}));
@@ -791,13 +916,15 @@ function buildFilters(){
   const retailerNames=Object.fromEntries(DATA.retailers.map(r=>[r.retailer,r.name]));
   document.getElementById("filters").append(
     el("label",{},"Model",el("input",{type:"search",placeholder:"npr. Novablast",oninput:e=>{state.q=e.target.value;render();}})),
-    ...[picker, mine, toggle].filter(Boolean),
+    ...[picker, mine, chip("min4","4+ broja","Samo ponude koje imaju bar 4 različita broja na stanju"),
+        chip("hideUsed","Sakrij iskorišćene","Sklanja modele koje si označio kao iskorišćene"), toggle].filter(Boolean),
     el("div",{class:"more"},
     el("label",{},"Pol",genderSelect),
     select("Brend","brand",uniq(o=>o.brand)),
     select("Prodavnica","retailer",uniq(o=>o.retailer),v=>retailerNames[v]||v),
     select("Kategorija","category",Object.keys(CATS),v=>CATS[v]),
-    el("label",{},"Maks. cena",el("input",{type:"number",min:0,step:500,oninput:e=>{state.maxPrice=e.target.value;render();}})),
+    el("label",{},"Min. cena",el("input",{id:"minprice",type:"number",min:0,step:500,placeholder:"npr. 12000",oninput:e=>{state.minPrice=e.target.value;render();}})),
+    el("label",{},"Maks. cena",el("input",{id:"maxprice",type:"number",min:0,step:500,oninput:e=>{state.maxPrice=e.target.value;render();}})),
     el("label",{title:"Popust koji navodi prodavac; nije potvrđena ušteda"},"Min. popust %",el("input",{type:"number",min:0,max:90,step:5,oninput:e=>{state.minDiscount=e.target.value;render();}})),
     select("Min. pouzdanost","confidence",["low","medium","high"]),
     // Artifakt ne dozvoljava preuzimanje fajlova, pa tamo nema izvoza.
