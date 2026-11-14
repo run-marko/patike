@@ -621,6 +621,10 @@ function storeLinks(group){
   const picks=new Map();
   for(const o of byGroup.get(group)||[]){
     if(o.availability!=="AVAILABLE"||o.stale||!hasPicked(o)) continue;
+    // i red sa prodavnicama poštuje "4+ broja" i granice cene, da ne ponudi boju sa 3 broja ili cenu van opsega
+    if(state.min4&&liveLabels(o).length<TOP_MIN_SIZES) continue;
+    if(state.minPrice&&priceOf(o)<Number(state.minPrice)) continue;
+    if(state.maxPrice&&priceOf(o)>Number(state.maxPrice)) continue;
     const cur=picks.get(o.retailer);
     if(!cur||priceOf(o)<priceOf(cur)) picks.set(o.retailer,o);
   }
