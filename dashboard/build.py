@@ -13,6 +13,11 @@ from pathlib import Path
 from common import not_running
 
 TEMPLATE = Path(__file__).resolve().parent / "template.html"
+FONTS = Path(__file__).resolve().parent / "fonts.css"  # Archivo i Martian Mono kao data: URI, da rade i bez interneta
+
+
+def _template() -> str:
+    return TEMPLATE.read_text(encoding="utf-8").replace("/*__FONTS__*/", FONTS.read_text(encoding="utf-8"), 1)
 NOT_RUNNING_PATH = "/api/not-running"
 LOCAL_HOSTS = ("127.0.0.1", "localhost")
 MAX_BODY = 4096
@@ -20,7 +25,7 @@ MAX_BODY = 4096
 
 def build_html(payload: str) -> str:
     safe = payload.replace("</", "<\\/")
-    return TEMPLATE.read_text(encoding="utf-8").replace("/*__DATA__*/null", safe)
+    return _template().replace("/*__DATA__*/null", safe)
 
 
 # Verzija za claude.ai artifakt (otvara se i sa telefona). Ceo JSON ima ~19 MB, a stranica sme 16 MB,
@@ -35,7 +40,7 @@ ARTIFACT_LOADER = (
 
 def build_artifact_html(payload: str) -> str:
     packed = base64.b64encode(gzip.compress(payload.encode("utf-8"), 9)).decode("ascii")
-    html = TEMPLATE.read_text(encoding="utf-8")
+    html = _template()
     head_end = html.index("</head>")
     style = html[html.index("<title>"):head_end]  # naslov i stil; omot stranice dodaje artifakt
     body = html[html.index("<body>") + len("<body>"):html.rindex("</body>")]

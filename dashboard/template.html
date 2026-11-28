@@ -4,222 +4,209 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Deal Finder Patike</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Martian+Mono:wght@400;600&display=swap">
 <style>
+/*__FONTS__*/
+/* run.marko · Noćni trening: tamna grafitna osnova, patike na svetlim pločicama kao u katalogu.
+   Narandžasta (hi-vis) samo za popust, mint za dobru ponudu i novu najnižu cenu. Archivo za tekst, Martian Mono za cifre. */
 :root {
-  /* run.marko: Linija (svetla) i Asfalt (tamna) podloga, Hi-vis narandžasta za akciju, Sat mint za dobru ponudu.
-     Archivo za tekst, Martian Mono za cene i brojeve (kao na sportskom satu). */
-  color-scheme: light;
-  --page:#F4F5F1; --surface:#ffffff; --ink:#15171B; --ink2:#454952; --muted:#6b6f79; --grid:#e3e4de; --axis:#c6c8c0;
-  --border:rgba(21,23,27,.13); --accent:#C2410C; --good:#0A7A52; --bad:#C22B2B; --warn:#8a5a00; --wash:rgba(21,23,27,.05);
-  --hot:#FF5A1F; --on-hot:#15171B; --mint:#7DEFC0; --on-mint:#0c2b20; --shadow:0 10px 30px rgba(21,23,27,.10);
-  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;--s7:#6250d6;--s8:#e34948;
+  color-scheme: dark;
+  --page:#0f1113; --surface:#16191c; --surface-2:#1d2125; --surface-3:#262b30;
+  --ink:#eef0f2; --ink2:#a9afb6; --muted:#7f868e;
+  --grid:rgba(238,240,242,.06); --axis:rgba(238,240,242,.16);
+  --border:rgba(238,240,242,.08); --border-2:rgba(238,240,242,.16); --wash:rgba(238,240,242,.05);
+  --hot:#FF5A1F; --on-hot:#0f1113; --mint:#7DEFC0; --on-mint:#0c2b20;
+  --accent:#a9afb6; --good:#7DEFC0; --bad:#ff7a6b; --warn:#f0b040;
+  --tile:#f3f4f2; --shadow:0 24px 48px rgba(0,0,0,.5);
+  --s1:#5b9cf0;--s2:#f08a5d;--s3:#7DEFC0;--s4:#f0c040;--s5:#e88ab0;--s6:#9ccf6a;--s7:#a99bf0;--s8:#e66767;
+  --ease:cubic-bezier(.2,0,0,1);
 }
-@media (prefers-color-scheme: dark) { :root:where(:not([data-theme="light"])) {
-  color-scheme: dark;
-  --page:#15171B; --surface:#1E2127; --ink:#F4F5F1; --ink2:#C3C6CC; --muted:#8E929B; --grid:#2B2F37; --axis:#3A3F49;
-  --border:rgba(244,245,241,.13); --accent:#FF8A5C; --good:#7DEFC0; --bad:#FF7070; --warn:#F0B040; --wash:rgba(244,245,241,.06);
-  --hot:#FF5A1F; --on-hot:#15171B; --mint:#7DEFC0; --on-mint:#0c2b20; --shadow:0 14px 36px rgba(0,0,0,.45);
-  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;
-}}
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --page:#15171B; --surface:#1E2127; --ink:#F4F5F1; --ink2:#C3C6CC; --muted:#8E929B; --grid:#2B2F37; --axis:#3A3F49;
-  --border:rgba(244,245,241,.13); --accent:#FF8A5C; --good:#7DEFC0; --bad:#FF7070; --warn:#F0B040; --wash:rgba(244,245,241,.06);
-  --hot:#FF5A1F; --on-hot:#15171B; --mint:#7DEFC0; --on-mint:#0c2b20; --shadow:0 14px 36px rgba(0,0,0,.45);
-  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;
+:root[data-theme="light"] {
+  color-scheme: light;
+  --page:#f4f5f3; --surface:#ffffff; --surface-2:#eef0ee; --surface-3:#e3e6e3;
+  --ink:#14171a; --ink2:#454b52; --muted:#646b73;
+  --grid:rgba(20,23,26,.07); --axis:rgba(20,23,26,.2);
+  --border:rgba(20,23,26,.1); --border-2:rgba(20,23,26,.2); --wash:rgba(20,23,26,.04);
+  --hot:#FF5A1F; --on-hot:#14171a; --mint:#7DEFC0; --on-mint:#0c2b20;
+  --accent:#454b52; --good:#0a7a52; --bad:#c22b2b; --warn:#8a5a00;
+  --tile:#ffffff; --shadow:0 24px 48px rgba(20,23,26,.18);
+  --s1:#2a78d6;--s2:#d95926;--s3:#0a7a52;--s4:#b07800;--s5:#c94f82;--s6:#4d7c0f;--s7:#6250d6;--s8:#c22b2b;
 }
 * { box-sizing:border-box; }
-body { margin:0; background:var(--page); color:var(--ink); font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif; }
-a { color:var(--accent); }
-header { padding:20px 20px 8px; max-width:1240px; margin:auto; }
-h1 { font-size:22px; margin:0 0 4px; }
-.sub { color:var(--ink2); }
-main { max-width:1240px; margin:auto; padding:0 20px 60px; }
-.filters { position:sticky; top:0; z-index:5; background:var(--page); padding:10px 0; display:flex; flex-wrap:wrap; gap:8px; align-items:center; border-bottom:1px solid var(--border); }
-.filters label { display:flex; flex-direction:column; font-size:11px; color:var(--muted); gap:2px; }
-select,input { font:inherit; color:var(--ink); background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:5px 7px; min-width:0; }
-input[type=search] { width:170px; } input[type=number] { width:100px; }
-button { font:inherit; color:var(--ink); background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:6px 10px; cursor:pointer; }
+body { margin:0; background:var(--page); color:var(--ink); font:400 14px/1.5 "Archivo",system-ui,-apple-system,"Segoe UI",sans-serif; -webkit-font-smoothing:antialiased; }
+a { color:var(--ink); text-decoration-color:var(--border-2); text-underline-offset:3px; }
+a:hover { text-decoration-color:var(--ink2); }
+.mono, .price, .old, .big, .score, .size, td.num, .rank, .disc, .cls, .change, .sub { font-family:"Martian Mono",ui-monospace,Consolas,monospace; font-variant-numeric:tabular-nums; }
+
+/* Zaglavlje */
+header { max-width:1440px; margin:auto; padding:32px 32px 16px; display:grid; grid-template-columns:1fr auto; gap:8px 16px; align-items:center; }
+h1 { font:600 28px/1.1 "Archivo",sans-serif; margin:0; }
+h1 em { font-style:normal; color:var(--ink2); }
+.lane { grid-column:1 / -1; height:2px; background:repeating-linear-gradient(90deg,var(--border-2) 0 24px,transparent 24px 40px); margin:8px 0 4px; }
+.sub { grid-column:1 / -1; font-size:11px; color:var(--muted); line-height:1.7; }
+.sub a { color:inherit; }
+.theme { width:36px; height:36px; padding:0; display:inline-grid; place-items:center; color:var(--ink2); }
+.scanbtn { grid-column:1 / -1; justify-self:start; margin-top:8px; background:var(--ink); color:var(--page); border-color:var(--ink); font-weight:500; }
+.scanbtn:hover { background:color-mix(in srgb,var(--ink) 88%,var(--page)); }
+.scanbtn:disabled { opacity:.5; }
+.tokenform .scanbtn { background:transparent; color:var(--ink); border-color:var(--border-2); }
+.stale { grid-column:1 / -1; margin-top:8px; padding:8px 12px; background:var(--surface); border:1px solid var(--border); border-left:2px solid var(--warn); border-radius:8px; color:var(--ink); }
+.running { grid-column:1 / -1; color:var(--good); }
+.tokenform { grid-column:1 / -1; margin-top:8px; padding:16px; background:var(--surface); border:1px solid var(--border); border-radius:12px; max-width:520px; display:grid; gap:8px; }
+.tokenform input { width:100%; }
+
+main { max-width:1440px; margin:auto; padding:0 32px 64px; }
+
+/* Kontrole */
+select, input { font:inherit; color:var(--ink); background:var(--surface-2); border:1px solid var(--border); border-radius:8px; height:36px; padding:0 12px; min-width:0; transition:border-color .15s var(--ease); }
+select:hover, input:hover { border-color:var(--border-2); }
+input[type=search] { width:200px; } input[type=number] { width:112px; }
+input[type=checkbox] { height:auto; accent-color:var(--mint); }
+button { font:inherit; color:var(--ink); background:transparent; border:1px solid var(--border-2); border-radius:8px; height:36px; padding:0 12px; cursor:pointer; font-weight:500; transition:background-color .15s var(--ease), border-color .15s var(--ease), color .15s var(--ease), transform .1s var(--ease); }
 button:hover { background:var(--wash); }
-nav.tabs { display:flex; flex-wrap:wrap; gap:4px; margin:14px 0; }
-nav.tabs button[aria-selected=true] { background:var(--ink); color:var(--page); border-color:var(--ink); }
-.note { color:var(--ink2); margin:0 0 12px; max-width:90ch; }
-.offer { background:var(--surface); border:1px solid var(--border); border-radius:8px; margin-bottom:8px; }
-.offer summary, .cols { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1.1fr) 58px minmax(0,1.2fr) minmax(0,1.1fr) minmax(0,1.2fr) minmax(0,1.1fr) 52px 88px; gap:12px; padding:12px 14px; }
-.offer summary { list-style:none; cursor:pointer; align-items:start; }
-.cols { padding:4px 14px; margin-bottom:4px; position:sticky; top:var(--filters-h,0); z-index:4; background:var(--page); }
-.sort { border:0; background:none; padding:3px 0; font-size:12px; font-weight:600; color:var(--ink2); text-align:left; white-space:nowrap; }
-.sort:hover { background:none; color:var(--ink); text-decoration:underline; }
-.sort[aria-sort] { color:var(--ink); }
-.lbl { display:none; font-size:11px; color:var(--muted); }
-.big { font-size:15px; font-weight:600; font-variant-numeric:tabular-nums; }
-.picked { font-weight:700; color:var(--ink); }
-.field { display:flex; flex-direction:column; font-size:11px; color:var(--muted); gap:2px; }
+button:active:not(:disabled) { transform:scale(.98); }
+button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible { outline:2px solid var(--mint); outline-offset:2px; }
+
+/* Filteri */
+.filters { position:sticky; top:0; z-index:5; display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; padding:16px 0; background:var(--page); border-bottom:1px solid var(--border); }
+.filters label, .field { display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--muted); }
+.chip { color:var(--ink2); }
+.chip[aria-pressed=true], .mine[aria-pressed=true] { background:var(--ink); color:var(--page); border-color:var(--ink); }
 .multi { position:relative; }
-.multi summary { list-style:none; cursor:pointer; font-size:14px; color:var(--ink); background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:5px 7px; min-width:110px; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.multi summary { list-style:none; cursor:pointer; color:var(--ink); background:var(--surface-2); border:1px solid var(--border); border-radius:8px; height:36px; line-height:34px; padding:0 12px; min-width:112px; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .multi summary::-webkit-details-marker { display:none; }
-.multi-panel { position:absolute; top:calc(100% + 4px); left:0; z-index:6; width:290px; max-width:calc(100vw - 32px); background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:10px; box-shadow:0 2px 8px rgba(0,0,0,.15); }
-.multi-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:2px 8px; max-height:280px; overflow-y:auto; margin-bottom:8px; }
-.filters .multi-grid label { flex-direction:row; align-items:center; gap:5px; font-size:13px; color:var(--ink); padding:3px 0; cursor:pointer; }
-.offer summary::-webkit-details-marker { display:none; }
-.name { font-weight:600; }
-.who { display:flex; gap:10px; align-items:flex-start; min-width:0; }
-.who > div:last-child { min-width:0; }
-.thumb { flex:none; width:72px; height:72px; object-fit:contain; background:#fff; border:1px solid var(--border); border-radius:6px; }
-.thumb.none { display:flex; align-items:center; justify-content:center; background:var(--wash); color:var(--muted); font-size:11px; text-align:center; }
-table .thumb { width:44px; height:44px; }
-.small { font-size:12px; color:var(--ink2); }
-.price { font-size:17px; font-weight:600; font-variant-numeric:tabular-nums; }
-.old { text-decoration:line-through; color:var(--muted); font-size:12px; }
-.score { font-size:17px; font-weight:600; font-variant-numeric:tabular-nums; }
-.cls { font-size:11px; font-weight:600; letter-spacing:.02em; }
-.cls.top { color:var(--good); } .cls.over { color:var(--bad); } .cls.none { color:var(--muted); }
-.cls.top,.cls.fill { display:inline-block; padding:1px 6px; border-radius:4px; border:1px solid var(--good); }
-.cls.fill { background:var(--good); color:var(--surface); }
+.multi-panel { position:absolute; top:calc(100% + 4px); left:0; z-index:6; width:292px; max-width:calc(100vw - 32px); background:var(--surface-2); border:1px solid var(--border-2); border-radius:12px; padding:12px; box-shadow:var(--shadow); display:grid; gap:8px; }
+.multi-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:0 8px; max-height:280px; overflow-y:auto; }
+.filters .multi-grid label { flex-direction:row; align-items:center; gap:8px; font-size:13px; color:var(--ink); padding:4px 0; cursor:pointer; }
 .only-phone { display:none; }
 .more { display:contents; }
-.mine[aria-pressed=true] { background:var(--ink); color:var(--page); border-color:var(--ink); }
-.stale { margin-top:6px; padding:6px 10px; border:1px solid var(--bad); border-radius:6px; color:var(--bad); font-weight:600; }
-.tokenform { margin-top:8px; padding:10px; border:1px solid var(--border); border-radius:6px; max-width:420px; }
-.scanbtn:disabled { opacity:.6; }
-.running { margin-top:6px; color:var(--good); font-weight:600; }
-.scanbtn { cursor:pointer; font:inherit; display:inline-block; margin-top:8px; padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--ink); text-decoration:none; font-weight:600; }
+
+/* Kartice (tabovi) */
+nav.tabs { display:flex; flex-wrap:wrap; gap:4px; margin:16px 0; }
+nav.tabs button { border-color:transparent; color:var(--ink2); }
+nav.tabs button:hover { color:var(--ink); background:var(--wash); }
+nav.tabs button[aria-selected=true] { background:var(--surface-3); color:var(--ink); border-color:var(--border); }
+
+.note { color:var(--ink2); margin:0 0 16px; max-width:90ch; font-size:13px; }
+.notice { max-width:none; padding:8px 12px; background:var(--surface); border:1px solid var(--border); border-radius:8px; color:var(--ink); }
+.empty { padding:24px; color:var(--ink2); background:var(--surface); border:1px dashed var(--border-2); border-radius:12px; }
+.small { font-size:12px; color:var(--ink2); }
 .flag { color:var(--warn); }
-.change { margin-top:3px; font-size:12px; font-weight:600; }
-.change.new_low,.change.down { color:var(--good); } .change.up { color:var(--bad); }
-.change .small { display:block; font-weight:400; }
-.detail { padding:4px 14px 14px; display:grid; grid-template-columns:1fr 1fr; gap:18px; border-top:1px solid var(--border); }
-.detail h4 { margin:10px 0 4px; font-size:13px; }
-.detail ul { margin:0; padding-left:18px; }
+
+/* Ponude */
+.offer summary, .cols { display:grid; grid-template-columns:minmax(0,2fr) minmax(120px,1.1fr) 64px minmax(0,1.2fr) minmax(0,1.1fr) minmax(0,1.2fr) minmax(0,1.1fr) 52px 88px; gap:16px; padding:16px 20px; }
+.cols { padding:8px 20px; margin-bottom:4px; position:sticky; top:var(--filters-h,0); z-index:4; background:var(--page); }
+.sort { border:0; height:auto; padding:0; background:none; font-size:12px; font-weight:400; color:var(--muted); text-align:left; white-space:nowrap; }
+.sort:hover { background:none; color:var(--ink); }
+.sort[aria-sort] { color:var(--ink); font-weight:500; }
+.offer { position:relative; background:var(--surface); border:1px solid var(--border); border-radius:12px; margin-bottom:8px; transition:border-color .15s var(--ease); }
+.offer:hover, .offer[open] { border-color:var(--border-2); }
+.offer summary { list-style:none; cursor:pointer; align-items:start; }
+.offer summary::-webkit-details-marker { display:none; }
+.lbl { display:none; font-size:11px; color:var(--muted); }
+.who { display:flex; gap:12px; align-items:flex-start; min-width:0; perspective:900px; }
+.who > div:last-child { min-width:0; }
+.rank { flex:none; width:24px; padding-top:4px; font-size:12px; color:var(--muted); }
+.name { font-weight:600; font-size:16px; line-height:1.25; margin-bottom:4px; }
+.name, .who .small { overflow-wrap:anywhere; }
+.price { font-size:18px; font-weight:600; white-space:nowrap; }
+.old { text-decoration:line-through; color:var(--muted); font-size:12px; }
+.big { font-size:15px; font-weight:400; }
+.score { font-size:18px; font-weight:600; }
+.picked { font-weight:600; color:var(--ink); }
+.disc { display:inline-block; background:var(--hot); color:var(--on-hot); font-size:13px; font-weight:600; padding:2px 8px; border-radius:6px; }
+.cls { display:inline-block; margin-top:4px; font-size:11px; color:var(--muted); }
+.cls.top, .cls.fill { padding:2px 8px; border-radius:6px; }
+.cls.top { color:var(--good); box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--good) 50%,transparent); }
+.cls.fill { background:var(--mint); color:var(--on-mint); }
+.cls.over { color:var(--bad); }
+.change { margin-top:4px; font-size:11px; font-weight:600; }
+.change.new_low, .change.down { color:var(--good); } .change.up { color:var(--bad); }
+.change .small { display:block; font-family:"Archivo",sans-serif; font-weight:400; }
+
+/* Slika patike: svetla pločica kao u katalogu. Uvećanje i okret za 180° dok je kursor na njoj (jedna fotografija,
+   pa je "druga strana" ista slika u ogledalu). */
+.thumb { position:relative; flex:none; width:88px; height:88px; object-fit:contain; background:var(--tile); border-radius:8px; transform-origin:left center; transition:scale .3s var(--ease), box-shadow .3s var(--ease); }
+.thumb:not(.none) { cursor:zoom-in; }
+.thumb.none { display:flex; align-items:center; justify-content:center; background:var(--surface-2); color:var(--muted); font-size:11px; text-align:center; }
+table .thumb { width:48px; height:48px; border-radius:6px; }
+@keyframes turn180 { 0%,12% { rotate:y 0deg; } 50%,62% { rotate:y 180deg; } 100% { rotate:y 360deg; } }
+@media (hover:hover) { .thumb:not(.none):hover { scale:2.7; z-index:30; box-shadow:var(--shadow); animation:turn180 5s .35s ease-in-out infinite; } }
+.thumb.zoom { scale:2.7; z-index:30; box-shadow:var(--shadow); animation:turn180 5s .35s ease-in-out infinite; cursor:zoom-out; }
+
+/* Prodavnice u redu */
+.stores { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.offer summary > .stores { grid-column:1 / -1; }
+.store { display:inline-flex; align-items:center; gap:4px; height:28px; padding:0 8px; border:1px solid var(--border); border-radius:6px; background:var(--surface-2); color:var(--ink); font-size:12px; font-variant-numeric:tabular-nums; text-decoration:none; }
+.store:hover { border-color:var(--border-2); background:var(--surface-3); }
+.stores > a.store:first-of-type { border-color:color-mix(in srgb,var(--mint) 45%,transparent); }
+.store span { color:var(--ink2); }
+.store.hand { border-style:dashed; background:transparent; color:var(--ink2); }
+.store.mark, .store.usedbtn { font-family:"Archivo",sans-serif; font-weight:500; color:var(--ink2); background:transparent; }
+.store.usedbtn { margin-left:auto; }
+.store.usedbtn[aria-pressed=true] { background:var(--ink); color:var(--page); border-color:var(--ink); }
+.offer.used summary > :not(.stores) { opacity:.45; }
+.offer.used::after { content:"Iskorišćeno"; position:absolute; top:16px; right:20px; font:500 11px "Martian Mono",monospace; color:var(--ink2); border:1px solid var(--border-2); border-radius:6px; padding:2px 8px; background:var(--surface); }
+
+/* Detalji ponude */
+.detail { padding:4px 20px 20px; display:grid; grid-template-columns:1fr 1fr; gap:24px; border-top:1px solid var(--border); }
+.detail h4 { margin:16px 0 4px; font-size:13px; font-weight:600; }
+.detail ul { margin:0; padding-left:20px; color:var(--ink2); }
 .sizes { display:flex; flex-wrap:wrap; gap:4px; }
-.size { padding:1px 6px; border:1px solid var(--border); border-radius:4px; font-size:12px; font-variant-numeric:tabular-nums; }
+.size { padding:2px 8px; border:1px solid var(--border); border-radius:6px; font-size:11px; }
 .size.no { color:var(--muted); text-decoration:line-through; }
 .size.want { border-color:var(--ink); font-weight:600; }
-.buy { display:inline-block; margin-top:8px; font-weight:600; }
-.stores { display:flex; flex-wrap:wrap; gap:4px; align-items:center; }
-.offer summary > .stores { grid-column:1 / -1; }
-.store { padding:2px 7px; border:1px solid var(--border); border-radius:4px; font-size:12px; font-variant-numeric:tabular-nums; text-decoration:none; }
-.store:hover { background:var(--wash); }
-.store.hand { border-style:dashed; color:var(--ink2); }
-.store.usedbtn { margin-left:auto; } .store.mark { color:var(--ink2); }
-.notice { max-width:none; padding:8px 10px; background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--ink); }
-.store span { color:var(--ink2); }
-table { border-collapse:collapse; width:100%; background:var(--surface); }
-th,td { text-align:left; padding:6px 9px; border-bottom:1px solid var(--grid); vertical-align:top; }
-th { font-size:12px; color:var(--ink2); font-weight:600; }
-td.num { font-variant-numeric:tabular-nums; text-align:right; }
-.tablewrap { overflow-x:auto; border:1px solid var(--border); border-radius:8px; margin-bottom:14px; }
-.group { margin-bottom:22px; }
-.group h3 { margin:0 0 3px; font-size:15px; }
+.buy { display:inline-block; margin-top:8px; font-weight:500; }
+
+/* Tabele */
+.tablewrap { overflow-x:auto; border:1px solid var(--border); border-radius:12px; margin-bottom:16px; background:var(--surface); }
+table { border-collapse:collapse; width:100%; }
+th, td { text-align:left; padding:8px 12px; border-bottom:1px solid var(--grid); vertical-align:top; }
+tbody tr:last-child td { border-bottom:0; }
+tbody tr:hover td { background:var(--wash); }
+th { font-size:12px; color:var(--muted); font-weight:400; }
+td.num { text-align:right; }
+.group { margin-bottom:24px; }
+.group h3 { margin:0 0 4px; font-size:15px; font-weight:600; }
+
+/* Grafikon istorije cene */
 .chart { position:relative; }
-.legend { display:flex; flex-wrap:wrap; gap:10px; font-size:12px; color:var(--ink2); margin-bottom:4px; }
-.key { display:inline-block; width:14px; height:2px; vertical-align:middle; margin-right:4px; }
-.tip { position:absolute; pointer-events:none; background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:6px 8px; font-size:12px; box-shadow:0 2px 8px rgba(0,0,0,.15); display:none; z-index:3; white-space:nowrap; }
-.tip b { font-variant-numeric:tabular-nums; }
-.empty { padding:24px; color:var(--ink2); background:var(--surface); border:1px dashed var(--border); border-radius:8px; }
+.legend { display:flex; flex-wrap:wrap; gap:12px; font-size:12px; color:var(--ink2); margin-bottom:4px; }
+.key { display:inline-block; width:12px; height:2px; vertical-align:middle; margin-right:4px; }
+.chart svg text { font-family:"Martian Mono",monospace; }
+.tip { position:absolute; pointer-events:none; background:var(--surface-2); border:1px solid var(--border-2); border-radius:8px; padding:8px 12px; font-size:12px; box-shadow:var(--shadow); display:none; z-index:3; white-space:nowrap; }
+.tip b { font-family:"Martian Mono",monospace; font-variant-numeric:tabular-nums; font-weight:600; }
+
+@media (min-width:761px) and (max-width:1100px) { .thumb { width:64px; height:64px; } .rank { width:20px; } .offer summary, .cols { gap:12px; } }
 @media (max-width:760px) {
-  header { padding:16px 16px 8px; } main { padding:0 16px 40px; }
-  .filters { position:static; align-items:flex-end; }
+  header { padding:20px 16px 8px; } main { padding:0 16px 40px; }
+  h1 { font-size:24px; }
+  .filters { position:static; padding:12px 0; gap:8px; }
   .only-phone { display:inline-block; }
   .filters:not(.open) .more { display:none; }
   .filters.open .more { display:flex; flex-wrap:wrap; gap:8px; width:100%; align-items:flex-end; }
   .filters > label:first-child { flex:1 1 100%; }
-  nav.tabs { flex-wrap:nowrap; overflow-x:auto; margin:10px -16px; padding:0 16px 4px; scrollbar-width:none; }
+  input[type=search] { width:100%; }
+  nav.tabs { flex-wrap:nowrap; overflow-x:auto; margin:12px -16px; padding:0 16px 4px; scrollbar-width:none; }
   nav.tabs button { flex:none; white-space:nowrap; }
   .note:not(.notice), .xmeta, .cols { display:none !important; }
   /* Zatvorena kartica je kratka: slika, ime, cena, popust, skor i brojevi. Ostalo se vidi kad se otvori. */
-  .offer summary { grid-template-columns:1.3fr .7fr 1fr; gap:6px 10px; padding:10px 12px; }
+  .offer summary { grid-template-columns:1.3fr .7fr 1fr; gap:8px 12px; padding:12px 16px; }
   .offer summary > :first-child, .offer summary > .sz, .offer summary > .stores { grid-column:1 / -1; }
   .offer summary > .sz { order:2; } .offer summary > .stores { order:3; }
   .offer:not([open]) .xtra { display:none; }
-  .thumb { width:60px; height:60px; }
-  .lbl { display:block; }
-  .detail { grid-template-columns:minmax(0,1fr); } .detail > div { min-width:0; overflow-wrap:anywhere; }
-  input[type=search] { width:100%; }
-}
-
-/* ===== izgled run.marko ===== */
-body { font:14px/1.45 "Archivo",system-ui,-apple-system,"Segoe UI",sans-serif; }
-.mono, .price, .old, .big, .score, .size, .store, td.num, .sub, .cols .sort, .rank { font-family:"Martian Mono",ui-monospace,Consolas,monospace; font-variant-numeric:tabular-nums; }
-header { padding:26px 20px 10px; display:grid; grid-template-columns:1fr auto; gap:6px 16px; align-items:end; }
-h1 { font:900 34px/0.95 "Archivo",sans-serif; font-stretch:125%; text-transform:uppercase; letter-spacing:-.02em; margin:0; text-wrap:balance; }
-h1 em { font-style:normal; color:var(--hot); }
-.lane { grid-column:1 / -1; height:5px; border-radius:3px; background:repeating-linear-gradient(90deg,var(--hot) 0 34px,transparent 34px 52px); opacity:.9; }
-.sub { grid-column:1 / -1; font-size:11px; color:var(--muted); line-height:1.6; }
-.sub a { color:inherit; }
-.theme { border-radius:999px; width:38px; height:38px; padding:0; font-size:17px; line-height:1; }
-.scanbtn { grid-column:1 / -1; justify-self:start; margin-top:4px; border-radius:999px; padding:7px 14px; background:var(--ink); color:var(--page); border-color:var(--ink); }
-.stale, .running, .tokenform { grid-column:1 / -1; }
-.tokenform { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 14px; max-width:520px; }
-button, select, input { border-radius:10px; }
-button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible { outline:2px solid var(--hot); outline-offset:2px; }
-.filters { margin-top:8px; padding:12px 14px; background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow); align-items:flex-end; gap:10px; top:8px; }
-.filters label, .field { font-family:"Martian Mono",monospace; font-size:9.5px; letter-spacing:.09em; text-transform:uppercase; gap:4px; }
-.filters select, .filters input, .multi summary { background:var(--page); padding:7px 9px; font-family:"Archivo",sans-serif; font-size:14px; letter-spacing:0; text-transform:none; border-radius:10px; }
-.filters .multi-grid label { font-family:"Archivo",sans-serif; letter-spacing:0; text-transform:none; }
-.chip { border-radius:999px; padding:7px 13px; font-weight:600; white-space:nowrap; background:var(--page); }
-.chip[aria-pressed=true], .mine[aria-pressed=true] { background:var(--ink); color:var(--page); border-color:var(--ink); }
-nav.tabs { gap:6px; margin:16px 0 14px; }
-nav.tabs button { border-radius:999px; padding:7px 14px; font-weight:600; background:transparent; }
-nav.tabs button:hover { background:var(--wash); }
-nav.tabs button[aria-selected=true] { background:var(--hot); color:var(--on-hot); border-color:var(--hot); }
-.note { font-size:13px; }
-.cols { background:var(--page); }
-.cols .sort { font-size:10px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
-.offer { position:relative; border-radius:16px; margin-bottom:10px; transition:border-color .15s, box-shadow .15s, transform .15s; }
-.offer:hover, .offer[open] { border-color:color-mix(in srgb,var(--hot) 55%,var(--border)); box-shadow:var(--shadow); }
-.offer summary { padding:16px 18px; gap:14px; }
-.who { gap:12px; }
-.rank { flex:none; width:26px; padding-top:4px; font-size:12px; font-weight:600; color:var(--muted); }
-.thumb { width:88px; height:88px; border-radius:14px; }
-table .thumb { width:48px; height:48px; border-radius:10px; }
-.name { font:700 16px/1.2 "Archivo",sans-serif; font-stretch:112%; letter-spacing:-.01em; margin-bottom:2px; }
-.price { font-size:18px; letter-spacing:-.05em; white-space:nowrap; }
-.big, .score { letter-spacing:-.03em; }
-.disc { display:inline-block; background:var(--hot); color:var(--on-hot); font-size:13px; font-weight:600; padding:2px 8px; border-radius:7px; }
-.cls { font-family:"Martian Mono",monospace; font-size:10px; letter-spacing:.04em; }
-.cls.top, .cls.fill { padding:2px 7px; border-radius:6px; border:1px solid var(--good); }
-.cls.fill { background:var(--mint); color:var(--on-mint); border-color:var(--mint); }
-.change { font-family:"Martian Mono",monospace; font-size:11px; }
-.stores { gap:6px; }
-.store { border-radius:999px; padding:4px 11px; font-size:11.5px; color:var(--ink); background:var(--page); }
-.stores > a.store:first-of-type { border-color:var(--hot); }
-.store.mark, .store.usedbtn { font-family:"Archivo",sans-serif; font-weight:600; }
-.store.usedbtn[aria-pressed=true] { background:var(--hot); color:var(--on-hot); border-color:var(--hot); }
-.size { border-radius:6px; font-size:11px; }
-.offer.used summary > :not(.stores) { opacity:.45; }
-.offer.used::after { content:"ISKORIŠĆENO"; position:absolute; top:12px; right:14px; font:600 10px "Martian Mono",monospace; letter-spacing:.14em; color:var(--hot); border:1.5px solid var(--hot); border-radius:5px; padding:2px 7px; transform:rotate(3deg); background:var(--surface); }
-.tablewrap { border-radius:14px; }
-th { font-family:"Martian Mono",monospace; font-size:10px; letter-spacing:.07em; text-transform:uppercase; }
-.empty { border-radius:16px; }
-.name, .who .small { overflow-wrap:anywhere; }
-@media (min-width:761px) and (max-width:1100px) { .thumb { width:64px; height:64px; } .rank { width:20px; } .offer summary, .cols { gap:10px; } }
-@media (min-width:761px) { .offer summary, .cols { grid-template-columns:minmax(0,2fr) minmax(116px,1.1fr) 64px minmax(0,1.2fr) minmax(0,1.1fr) minmax(0,1.2fr) minmax(0,1.1fr) 52px 88px; } }
-/* slika: uvećanje, pa okret za 180 stepeni i nazad dok je kursor na njoj. Jedna fotografija po patici,
-   pa je "druga strana" ista slika u ogledalu (natpisi su obrnuti); prava druga strana traži drugu fotografiju. */
-.who { perspective:900px; }
-.thumb { position:relative; transform-origin:left center; transition:scale .3s ease, box-shadow .3s ease; }
-.thumb:not(.none) { cursor:zoom-in; }
-@keyframes turn180 { 0%,12% { rotate:y 0deg; } 50%,62% { rotate:y 180deg; } 100% { rotate:y 360deg; } }
-@media (hover:hover) { .thumb:not(.none):hover { scale:2.7; z-index:30; box-shadow:0 20px 44px rgba(0,0,0,.4); animation:turn180 5s .35s ease-in-out infinite; } }
-.thumb.zoom { scale:2.7; z-index:30; box-shadow:0 20px 44px rgba(0,0,0,.4); animation:turn180 5s .35s ease-in-out infinite; cursor:zoom-out; }
-@media (prefers-reduced-motion:reduce) { .thumb:not(.none):hover, .thumb.zoom { animation:none; } .offer, .thumb { transition:none; } }
-@media (max-width:760px) {
-  header { padding:18px 16px 8px; } h1 { font-size:26px; }
-  .filters { top:0; padding:10px 12px; border-radius:14px; }
   .thumb { width:72px; height:72px; }
-  .rank { width:22px; }
-  .offer summary { padding:12px 14px; }
-  .offer.used::after { top:auto; bottom:10px; right:10px; }
+  .rank { width:20px; }
+  .lbl { display:block; }
+  .detail { grid-template-columns:minmax(0,1fr); padding:4px 16px 16px; } .detail > div { min-width:0; overflow-wrap:anywhere; }
+  .offer.used::after { top:auto; bottom:12px; right:12px; }
 }
+@media (prefers-reduced-motion:reduce) { .thumb:not(.none):hover, .thumb.zoom { animation:none; } .offer, .thumb, button { transition:none; } }
 </style>
 </head>
 <body>
 <header>
   <h1>Patike <em>na popustu</em></h1>
-  <button class="theme" id="theme" type="button" aria-label="Promeni svetlu i tamnu temu" title="Svetla / tamna tema">◐</button>
+  <button class="theme" id="theme" type="button" aria-label="Promeni svetlu i tamnu temu" title="Svetla / tamna tema"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button>
   <div class="lane" aria-hidden="true"></div>
   <div class="sub" id="meta"></div>
 </header>
@@ -231,7 +218,7 @@ th { font-family:"Martian Mono",monospace; font-size:10px; letter-spacing:.07em;
 <script>
 const DATA = /*__DATA__*/null;
 const CATS = {daily_trainer:"Svakodnevne",long_run:"Duge staze",tempo:"Tempo",interval:"Intervali",racing:"Trka",recovery:"Oporavak",stability:"Stabilnost"};
-const STAT = {VERIFIED:"Provereno",PARTIAL:"Delimično",NOT_VERIFIED:"NOT VERIFIED",NOT_CHECKED:"Nije skenirano"};
+const STAT = {VERIFIED:"Provereno",PARTIAL:"Delimično",NOT_VERIFIED:"Nije provereno",NOT_CHECKED:"Nije skenirano"};
 const AVAIL = {AVAILABLE:"Dostupno",OUT_OF_STOCK:"Nema na stanju",UNKNOWN:"Nepoznato"};
 const CLAIM = {NONE:"bez popusta",CLAIMED:"tvrdnja prodavca, nije potvrđena",CONTRADICTED:"tvrdnja je osporena podacima",SUPPORTED:"potkrepljeno našom istorijom"};
 const RETAILER_ORDER = DATA.retailers.map(r=>r.retailer).sort();
@@ -278,15 +265,15 @@ function setUsed(group,on){
 }
 function usedButton(group){
   const on=used.has(group);
-  return el("button",{class:"store usedbtn",type:"button","aria-pressed":String(on),text:on?"✓ Iskorišćeno":"Označi iskorišćeno",
+  return el("button",{class:"store usedbtn",type:"button","aria-pressed":String(on),text:on?"Iskorišćeno":"Označi iskorišćeno",
     title:on?`Označeno ${used.get(group)}. Klik vraća model.`:"Označi da si ovaj model već iskoristio u objavi. Pamti se na ovom uređaju.",
     onclick:e=>{e.preventDefault();e.stopPropagation();setUsed(group,!on);}});
 }
-// Tema: podrazumevano prati uređaj; dugme u zaglavlju je menja i pamti.
+// Tema: podrazumevano tamna (Noćni trening); dugme u zaglavlju je menja i pamti.
 const THEME_KEY="patike-tema";
 try{ const t=localStorage.getItem(THEME_KEY); if(t==="dark"||t==="light") document.documentElement.dataset.theme=t; }catch(e){}
 document.getElementById("theme").addEventListener("click",()=>{
-  const dark=document.documentElement.dataset.theme?document.documentElement.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
+  const dark=document.documentElement.dataset.theme!=="light";
   const next=dark?"light":"dark"; document.documentElement.dataset.theme=next;
   try{ localStorage.setItem(THEME_KEY,next); }catch(e){}
 });
@@ -336,6 +323,7 @@ function notRunningView(){
         el("td",{},el("button",{class:"store",type:"button",text:"Vrati",onclick:()=>setNotRunning(r.id,r.m.name,false)})))))))];
 }
 const CONF = {low:0,medium:1,high:2};
+const CLASS_LABEL = {"EXCEPTIONAL":"Izuzetna ponuda","VERY GOOD":"Vrlo dobra","GOOD":"Dobra","NORMAL":"Uobičajena","OVERPRICED":"Preskupo","INSUFFICIENT DATA":"Nema dovoljno podataka"};
 const CLASS_RANK = {"EXCEPTIONAL":0,"VERY GOOD":1,"GOOD":2,"NORMAL":3,"OVERPRICED":4,"INSUFFICIENT DATA":5};
 
 const forGender=o=>o.gender===state.gender||o.gender==="unisex";
@@ -497,7 +485,7 @@ function shoeImage(o){
   const img=el("img",{class:"thumb",src,alt:fullName(o),loading:"lazy",referrerpolicy:"no-referrer",onerror:()=>img.replaceWith(blank())});
   return zoomable(img);
 }
-const CHANGES={new_low:"▼ Nova najniža cena",down:"▼ Cena snižena",up:"▲ Cena podignuta"};
+const CHANGES={new_low:"Nova najniža cena",down:"Cena snižena",up:"Cena podignuta"};
 const CHANGE_ORDER=Object.keys(CHANGES);
 const byChange=(a,b)=>{
   const x=a.history.last_change, y=b.history.last_change;
@@ -519,7 +507,7 @@ function allTimeLow(o){
 const byLow=(a,b)=>{ const x=allTimeLow(a), y=allTimeLow(b); return y.since.slice(0,10).localeCompare(x.since.slice(0,10))||x.pct-y.pct; };
 function lowBadge(o){
   const l=allTimeLow(o);
-  return l?el("div",{class:"change new_low",title:"Najniža cena koju smo zabeležili za ovaj oglas."},"▼ Najniža cena do sad",
+  return l?el("div",{class:"change new_low",title:"Najniža cena koju smo zabeležili za ovaj oglas."},"Najniža cena do sad",
     el("span",{class:"small",text:`bila ${rsd(l.from)} (${pct(l.pct)}), od ${when(l.since)}`})):null;
 }
 function changeBadge(o){
@@ -576,7 +564,7 @@ function offerCard(o,i) {
     el("div",{},
       el("div",{class:"lbl",text:"Skor"}),
       el("div",{class:"score",text:o.score===null?"-":o.score}),
-      el("div",{class:"cls "+clsName,text:o.classification}),
+      el("div",{class:"cls "+clsName,text:CLASS_LABEL[o.classification]||o.classification}),
       el("div",{class:"small xtra",text:"Pouzdanost: "+o.confidence})),
     storeLinks(o.group));
   summary.lastElementChild.classList.add("xtra");
@@ -716,7 +704,7 @@ function historyChart(offer) {
   const times = [...new Set(all.map(p=>p[0]))].sort();
   const wrap = el("div",{class:"chart"});
   if (times.length<2) {
-    wrap.append(el("div",{class:"small",text:`INSUFFICIENT DATA: zabeležen je samo ${times.length} sken. Grafik se pojavljuje od drugog skena; cene se ne izmišljaju.`}));
+    wrap.append(el("div",{class:"small",text:`Nema dovoljno podataka: zabeležen je samo ${times.length} sken. Grafik se pojavljuje od drugog skena; cene se ne izmišljaju.`}));
     wrap.append(historyTable(keys,series,times));
     return wrap;
   }
@@ -847,7 +835,7 @@ function compareView(){
         b?`Sledeći: ${b.retailer_name} ${rsd(priceOf(b))} (razlika ${rsd(diff)}, ${pct(diffPct)})`:null,
         hidden?`Sakriveno ${hidden} ponuda bez izabranog broja`:null,
         `Provereno prodavnica: ${c.retailers_verified}; imaju model: ${c.retailers_carrying}`,
-        c.not_verified.length?`NOT VERIFIED: ${c.not_verified.join(", ")}`:null].filter(Boolean).join(" | ")}),
+        c.not_verified.length?`Nije provereno: ${c.not_verified.join(", ")}`:null].filter(Boolean).join(" | ")}),
       el("div",{class:"tablewrap"},el("table",{},
         el("thead",{},el("tr",{},["Prodavnica","SKU","Cena","Precrtana","Popust","Stanje","Veličine","Provereno",""].map(t=>el("th",{text:t})))),
         el("tbody",{},list.map(o=>el("tr",{},
@@ -859,7 +847,7 @@ function compareView(){
   })];
 }
 function storesView(){
-  return [el("p",{class:"note",text:"NOT VERIFIED znači da sajt nije proveren. To ne znači da proizvod ne postoji."}),
+  return [el("p",{class:"note",text:"„Nije provereno“ znači da sajt nije proveren. To ne znači da proizvod ne postoji."}),
     el("div",{class:"tablewrap"},el("table",{},
     el("thead",{},el("tr",{},["Prodavnica","Status","Stranice ok/neuspešne","Oglasi","Proveren","Napomena"].map(t=>el("th",{text:t})))),
     el("tbody",{},DATA.retailers.map(r=>el("tr",{},
